@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Video Tool</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 500px;
+      background: #1f2937;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    p {
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      margin-top: 15px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #374151;
+      border-radius: 12px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <h1>🎬 My Video Tool</h1>
+
+    <p>Dán liên kết video vào bên dưới</p>
+
+    <input
+      id="videoUrl"
+      type="url"
+      placeholder="https://..."
+    >
+
+    <button onclick="analyzeVideo()">
+      PHÂN TÍCH
+    </button>
+
+    <div id="result"></div>
+
+  </div>
+
+  <script>
+    function analyzeVideo() {
+      const url = document.getElementById("videoUrl").value.trim();
+      const result = document.getElementById("result");
+
+      if (!url) {
+        result.style.display = "block";
+        result.innerHTML = "⚠️ Hãy dán một liên kết trước.";
+        return;
+      }
+
+      result.style.display = "block";
+      result.innerHTML =
+        "✅ Đã nhận liên kết!<br><br>" +
+        "Bước tiếp theo chúng ta sẽ kết nối chức năng phân tích video.";
+    }
+  </script>
+
+</body>
+</html>
