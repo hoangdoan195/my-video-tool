@@ -39,7 +39,8 @@
 
       background: rgba(31,41,55,.95);
 
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.45);
     }
 
     .logo {
@@ -145,6 +146,11 @@
       transform: scale(.98);
     }
 
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
     #result {
       display: none;
 
@@ -165,7 +171,6 @@
 
     .platform {
       color: #60a5fa;
-
       font-weight: bold;
     }
 
@@ -233,7 +238,10 @@
 ></textarea>
 
 
-<button onclick="analyzeVideo()">
+<button
+  id="analyzeButton"
+  onclick="analyzeVideo()"
+>
   🔍 PHÂN TÍCH VIDEO
 </button>
 
@@ -248,29 +256,26 @@
   </div>  <script>
 
     /*
-      ==========================================
-      TÌM URL TRONG NỘI DUNG ĐƯỢC SAO CHÉP
-      ==========================================
+      Địa chỉ backend Render
+    */
+
+    const API_URL =
+      "https://my-video-tool-api.onrender.com";
+
+
+    /*
+      Tìm URL trong nội dung được sao chép
     */
 
     function extractUrl(text) {
 
-      /*
-        Tìm URL http/https trong cả đoạn văn.
-      */
-
-      const urlMatches = text.match(
-        /https?:\/\/[^\s"'<>]+/gi
-      );
+      const urlMatches =
+        text.match(/https?:\/\/[^\s"'<>]+/gi);
 
 
       if (urlMatches && urlMatches.length > 0) {
 
         let url = urlMatches[0];
-
-        /*
-          Xóa ký tự thừa ở cuối URL.
-        */
 
         url = url.replace(
           /[)\]}>，。！？；：]+$/g,
@@ -282,182 +287,40 @@
 
 
       /*
-        Một số nội dung chia sẻ có thể
-        không giữ nguyên http/https.
+        Hỗ trợ link Douyin nếu phần
+        https:// bị mất
       */
 
-      const shortDouyin = text.match(
-        /(?:v\.douyin\.com|douyin\.com|iesdouyin\.com)\/[A-Za-z0-9?=&._~\/-]+/i
-      );
+      const douyinMatch =
+        text.match(
+          /(?:v\.douyin\.com|douyin\.com|iesdouyin\.com)\/[A-Za-z0-9?=&._~\/-]+/i
+        );
 
 
-      if (shortDouyin) {
+      if (douyinMatch) {
 
-        return "https://" + shortDouyin[0];
+        return "https://" + douyinMatch[0];
       }
 
-
-      /*
-        Không tìm thấy URL.
-      */
 
       return null;
     }
 
 
     /*
-      ==========================================
-      NHẬN DIỆN NỀN TẢNG
-      ==========================================
+      Phân tích video bằng Backend
     */
 
-    function detectPlatform(url) {
-
-      try {
-
-        const hostname =
-          new URL(url)
-            .hostname
-            .toLowerCase()
-            .replace(/^www\./, "");
-
-
-        /*
-          YOUTUBE
-        */
-
-        if (
-          hostname === "youtube.com" ||
-          hostname.endsWith(".youtube.com") ||
-          hostname === "youtu.be"
-        ) {
-
-          return {
-            name: "YouTube",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          TIKTOK
-        */
-
-        if (
-          hostname === "tiktok.com" ||
-          hostname.endsWith(".tiktok.com")
-        ) {
-
-          return {
-            name: "TikTok",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          FACEBOOK
-        */
-
-        if (
-          hostname === "facebook.com" ||
-          hostname.endsWith(".facebook.com") ||
-          hostname === "fb.watch"
-        ) {
-
-          return {
-            name: "Facebook",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          INSTAGRAM
-        */
-
-        if (
-          hostname === "instagram.com" ||
-          hostname.endsWith(".instagram.com")
-        ) {
-
-          return {
-            name: "Instagram",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          X / TWITTER
-        */
-
-        if (
-          hostname === "x.com" ||
-          hostname.endsWith(".x.com") ||
-          hostname === "twitter.com" ||
-          hostname.endsWith(".twitter.com")
-        ) {
-
-          return {
-            name: "X / Twitter",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          DOUYIN
-        */
-
-        if (
-          hostname === "douyin.com" ||
-          hostname.endsWith(".douyin.com") ||
-          hostname === "iesdouyin.com" ||
-          hostname.endsWith(".iesdouyin.com")
-        ) {
-
-          return {
-            name: "Douyin",
-            hostname: hostname
-          };
-        }
-
-
-        /*
-          Không xác định
-        */
-
-        return {
-          name: null,
-          hostname: hostname
-        };
-
-      }
-
-      catch (error) {
-
-        return {
-          name: null,
-          hostname: null
-        };
-      }
-    }
-
-
-    /*
-      ==========================================
-      PHÂN TÍCH VIDEO
-      ==========================================
-    */
-
-    function analyzeVideo() {
+    async function analyzeVideo() {
 
       const input =
         document.getElementById("videoUrl");
 
       const result =
         document.getElementById("result");
+
+      const button =
+        document.getElementById("analyzeButton");
 
 
       const text =
@@ -466,10 +329,6 @@
 
       result.style.display = "block";
 
-
-      /*
-        Không nhập gì
-      */
 
       if (!text) {
 
@@ -483,104 +342,151 @@
 
 
       /*
-        Tìm URL trong toàn bộ nội dung.
+        Tìm URL trong toàn bộ nội dung
       */
 
       const url =
         extractUrl(text);
 
 
-      /*
-        Không tìm thấy URL.
-      */
-
       if (!url) {
 
         result.innerHTML =
-
           '<span class="error">' +
           '❌ Không tìm thấy liên kết video.' +
-          '</span>' +
-
-          '<br><br>' +
-
-          'Bạn có thể dán nguyên nội dung được ' +
-          'sao chép từ Douyin.';
+          '</span>';
 
         return;
       }
 
 
       /*
-        Nhận diện nền tảng.
+        Hiển thị trạng thái đang kết nối
       */
 
-      const platform =
-        detectPlatform(url);
+      button.disabled = true;
+
+      button.innerText =
+        "⏳ ĐANG PHÂN TÍCH...";
 
 
-      /*
-        Không nhận diện được.
-      */
+      result.innerHTML =
+        '<span class="warning">' +
+        '⏳ Đang kết nối với máy chủ...' +
+        '</span>';
 
-      if (!platform.name) {
+
+      try {
+
+        /*
+          Gửi URL tới backend
+        */
+
+        const response =
+          await fetch(
+            API_URL + "/api/analyze",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json"
+              },
+
+              body: JSON.stringify({
+                url: url
+              })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        /*
+          Backend báo lỗi
+        */
+
+        if (!response.ok || !data.success) {
+
+          throw new Error(
+            data.message ||
+            "Backend không xử lý được liên kết."
+          );
+        }
+
+
+        /*
+          Backend trả kết quả thành công
+        */
 
         result.innerHTML =
 
-          '<span class="warning">' +
-          '⚠️ Đã tìm thấy liên kết nhưng chưa nhận diện được nền tảng.' +
+          '<span class="success">' +
+          '✅ Backend đã nhận liên kết!' +
           '</span>' +
 
           '<br><br>' +
 
-          'Tên miền:' +
+          'Nền tảng: ' +
 
-          '<div class="detected-url">' +
-          platform.hostname +
-          '</div>' +
+          '<span class="platform">' +
+          data.platform +
+          '</span>' +
+
+          '<br><br>' +
 
           'Liên kết:' +
 
           '<div class="detected-url">' +
-          url +
-          '</div>';
+          data.url +
+          '</div>' +
 
-        return;
+          '<br>' +
+
+          '<span class="warning">' +
+          '✅ Kết nối Web → Backend đã hoạt động.' +
+          '<br><br>' +
+          '⏳ Bước tiếp theo sẽ xây chức năng lấy thông tin video.' +
+          '</span>';
+
       }
 
 
-      /*
-        Thành công.
-      */
+      catch (error) {
 
-      result.innerHTML =
+        console.error(error);
 
-        '<span class="success">' +
-        '✅ Đã nhận liên kết!' +
-        '</span>' +
 
-        '<br><br>' +
+        result.innerHTML =
 
-        'Nền tảng: ' +
+          '<span class="error">' +
+          '❌ Không kết nối được với backend.' +
+          '</span>' +
 
-        '<span class="platform">' +
-        platform.name +
-        '</span>' +
+          '<br><br>' +
 
-        '<br><br>' +
+          'Chi tiết: ' +
 
-        'Liên kết đã tìm thấy:' +
+          '<span class="warning">' +
+          error.message +
+          '</span>' +
 
-        '<div class="detected-url">' +
-        url +
-        '</div>' +
+          '<br><br>' +
 
-        '<br>' +
+          'Hãy thử lại sau vài giây.';
 
-        '<span class="warning">' +
-        '⏳ Chức năng lấy thông tin và tải video ' +
-        'sẽ được kết nối ở bước tiếp theo.' +
-        '</span>';
+      }
+
+
+      finally {
+
+        button.disabled = false;
+
+        button.innerText =
+          "🔍 PHÂN TÍCH VIDEO";
+
+      }
 
     }
 
