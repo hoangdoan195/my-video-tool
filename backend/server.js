@@ -1,55 +1,106 @@
 const express = require("express");
 const cors = require("cors");
+
 const app = express();
+
 const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
-function detectPlatform(url) {
-try {
-const hostname = new URL(url)
-.hostname
-.toLowerCase()
-.replace(/^www./, "");
-￼
-} catch (error) {
-return null;
-}
-}
-/*
-API kiểm tra
-*/
+
 app.get("/", (req, res) => {
 res.json({
 success: true,
-message: "My Video Tool backend đang hoạt động."
+message: "My Video Tool backend đang hoạt động!"
 });
 });
-/*
-API phân tích URL
-*/
+
 app.post("/api/analyze", (req, res) => {
-const { url } = req.body || {};
+
+const url = req.body && req.body.url;
+
 if (!url) {
 return res.status(400).json({
 success: false,
 message: "Thiếu URL."
 });
 }
-const platform = detectPlatform(url);
-if (!platform) {
-return res.status(400).json({
-success: false,
-message: "Không nhận diện được nền tảng."
-});
+
+let platform = null;
+
+try {
+
+const hostname = new URL(url)
+  .hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
+
+
+if (
+  hostname === "youtube.com" ||
+  hostname.endsWith(".youtube.com") ||
+  hostname === "youtu.be"
+) {
+  platform = "YouTube";
 }
-return res.json({
+
+
+else if (
+  hostname === "tiktok.com" ||
+  hostname.endsWith(".tiktok.com")
+) {
+  platform = "TikTok";
+}
+
+
+else if (
+  hostname === "facebook.com" ||
+  hostname.endsWith(".facebook.com") ||
+  hostname === "fb.watch"
+) {
+  platform = "Facebook";
+}
+
+
+else if (
+  hostname === "douyin.com" ||
+  hostname.endsWith(".douyin.com") ||
+  hostname === "iesdouyin.com" ||
+  hostname.endsWith(".iesdouyin.com")
+) {
+  platform = "Douyin";
+}
+
+} catch (error) {
+
+return res.status(400).json({
+  success: false,
+  message: "URL không hợp lệ."
+});
+
+}
+
+if (!platform) {
+
+return res.status(400).json({
+  success: false,
+  message: "Không nhận diện được nền tảng."
+});
+
+}
+
+res.json({
 success: true,
 platform: platform,
 url: url
 });
+
 });
-app.listen(PORT, () => {
+
+app.listen(PORT, "0.0.0.0", () => {
+
 console.log(
-My Video Tool backend đang chạy tại port ${PORT}
+"My Video Tool backend đang chạy tại port ${PORT}"
 );
+
 });
