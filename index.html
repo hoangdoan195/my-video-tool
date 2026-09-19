@@ -1,8 +1,7 @@
 <!DOCTYPE html><html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Video Tool</title>  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>My Video Tool</title>  <style>
     * {
       box-sizing: border-box;
     }
@@ -11,23 +10,37 @@
       margin: 0;
       min-height: 100vh;
       padding: 20px;
+
       display: flex;
       justify-content: center;
       align-items: center;
+
       font-family: Arial, sans-serif;
+
       background:
-        radial-gradient(circle at top, #1e3a8a 0%, #111827 45%, #030712 100%);
+        radial-gradient(
+          circle at top,
+          #1e3a8a 0%,
+          #111827 45%,
+          #030712 100%
+        );
+
       color: white;
     }
 
     .app {
       width: 100%;
       max-width: 520px;
+
       padding: 30px;
+
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 24px;
-      background: rgba(31,41,55,.92);
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+
+      background: rgba(31,41,55,.95);
+
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.45);
     }
 
     .logo {
@@ -44,37 +57,47 @@
 
     .subtitle {
       margin: 10px 0 25px;
+
       text-align: center;
+
       color: #9ca3af;
+
       line-height: 1.5;
     }
 
     label {
       display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #d1d5db;
-      font-weight: bold;
-    }
 
-    .input-box {
-      position: relative;
+      margin-bottom: 8px;
+
+      font-size: 14px;
+
+      color: #d1d5db;
+
+      font-weight: bold;
     }
 
     input {
       width: 100%;
+
       padding: 16px;
+
       border: 1px solid #4b5563;
       border-radius: 14px;
+
       outline: none;
+
       background: #111827;
       color: white;
+
       font-size: 16px;
     }
 
     input:focus {
       border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+
+      box-shadow:
+        0 0 0 3px rgba(59,130,246,.15);
     }
 
     input::placeholder {
@@ -83,15 +106,28 @@
 
     button {
       width: 100%;
+
       margin-top: 14px;
+
       padding: 16px;
+
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
+
+      background:
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #4f46e5
+        );
+
       color: white;
+
       font-size: 16px;
       font-weight: bold;
+
       cursor: pointer;
+
       transition: .2s;
     }
 
@@ -105,11 +141,17 @@
 
     #result {
       display: none;
+
       margin-top: 20px;
+
       padding: 18px;
+
       border-radius: 14px;
+
       background: #111827;
+
       border: 1px solid #374151;
+
       line-height: 1.6;
     }
 
@@ -126,10 +168,17 @@
       color: #fbbf24;
     }
 
+    .error {
+      color: #f87171;
+    }
+
     .footer {
       margin-top: 22px;
+
       text-align: center;
+
       color: #6b7280;
+
       font-size: 12px;
     }
   </style></head><body>  <div class="app"><div class="logo">🎬</div>
@@ -140,16 +189,16 @@
   Dán liên kết video để bắt đầu
 </p>
 
-<label for="videoUrl">Liên kết video</label>
+<label for="videoUrl">
+  Liên kết video
+</label>
 
-<div class="input-box">
-  <input
-    id="videoUrl"
-    type="url"
-    placeholder="https://..."
-    autocomplete="off"
-  >
-</div>
+<input
+  id="videoUrl"
+  type="url"
+  placeholder="https://..."
+  autocomplete="off"
+>
 
 <button onclick="analyzeVideo()">
   🔍 PHÂN TÍCH VIDEO
@@ -162,67 +211,218 @@
 </div>
 
   </div>  <script>
-    function analyzeVideo() {
-      const input = document.getElementById("videoUrl");
-      const result = document.getElementById("result");
 
-      const url = input.value.trim();
+    function analyzeVideo() {
+
+      const input =
+        document.getElementById("videoUrl");
+
+      const result =
+        document.getElementById("result");
+
+      const url =
+        input.value.trim();
+
 
       result.style.display = "block";
 
+
+      /* Không nhập link */
+
       if (!url) {
+
         result.innerHTML =
-          '<span class="warning">⚠️ Hãy dán liên kết video trước.</span>';
+          '<span class="warning">' +
+          '⚠️ Hãy dán liên kết video trước.' +
+          '</span>';
+
         return;
       }
+
+
+      let hostname;
+
+
+      /* Kiểm tra URL */
+
+      try {
+
+        let fixedUrl = url;
+
+        /*
+          Nếu người dùng không nhập https://
+          thì tự thêm vào.
+        */
+
+        if (
+          !fixedUrl.startsWith("http://") &&
+          !fixedUrl.startsWith("https://")
+        ) {
+
+          fixedUrl =
+            "https://" + fixedUrl;
+
+        }
+
+
+        hostname =
+          new URL(fixedUrl)
+            .hostname
+            .toLowerCase()
+            .replace(/^www\./, "");
+
+      }
+
+      catch (error) {
+
+        result.innerHTML =
+          '<span class="error">' +
+          '❌ Liên kết không hợp lệ.' +
+          '</span>';
+
+        return;
+      }
+
 
       let platform = "Không xác định";
 
-      try {
-        const hostname = new URL(url).hostname.toLowerCase();
 
-        if (
-          hostname.includes("youtube.com") ||
-          hostname.includes("youtu.be")
-        ) {
-          platform = "YouTube";
-        } else if (
-          hostname.includes("tiktok.com")
-        ) {
-          platform = "TikTok";
-        } else if (
-          hostname.includes("facebook.com") ||
-          hostname.includes("fb.watch")
-        ) {
-          platform = "Facebook";
-        } else if (
-          hostname.includes("douyin.com") ||
-          hostname.includes("iesdouyin.com")
-        ) {
-          platform = "Douyin";
-        } else if (
-          hostname.includes("instagram.com")
-        ) {
-          platform = "Instagram";
-}
-        } else if (
-          hostname.includes("x.com") ||
-          hostname.includes("twitter.com")
-        ) {
-          platform = "X / Twitter";
-        }
-      } catch (error) {
-        result.innerHTML =
-          '<span class="warning">⚠️ Liên kết không hợp lệ.</span>';
-        return;
+      /* =========================
+         YOUTUBE
+         ========================= */
+
+      if (
+        hostname === "youtube.com" ||
+        hostname.endsWith(".youtube.com") ||
+        hostname === "youtu.be"
+      ) {
+
+        platform = "YouTube";
+
       }
 
-      result.innerHTML =
-        '<span class="success">✅ Đã nhận liên kết</span><br><br>' +
-        'Nền tảng: <span class="platform">' +
-        platform +
-        '</span><br><br>' +
-        '<span class="warning">⏳ Chức năng lấy thông tin và tải video sẽ được kết nối ở bước tiếp theo.</span>';
+
+      /* =========================
+         TIKTOK
+         ========================= */
+
+      else if (
+        hostname === "tiktok.com" ||
+        hostname.endsWith(".tiktok.com")
+      ) {
+
+        platform = "TikTok";
+
+      }
+
+
+      /* =========================
+         FACEBOOK
+         ========================= */
+
+      else if (
+        hostname === "facebook.com" ||
+        hostname.endsWith(".facebook.com") ||
+        hostname === "fb.watch"
+      ) {
+
+        platform = "Facebook";
+
+      }
+
+
+      /* =========================
+         INSTAGRAM
+         ========================= */
+
+      else if (
+        hostname === "instagram.com" ||
+        hostname.endsWith(".instagram.com")
+      ) {
+
+        platform = "Instagram";
+
+      }
+
+
+      /* =========================
+         X / TWITTER
+         ========================= */
+
+      else if (
+        hostname === "x.com" ||
+        hostname.endsWith(".x.com") ||
+        hostname === "twitter.com" ||
+        hostname.endsWith(".twitter.com")
+      ) {
+
+        platform = "X / Twitter";
+
+      }
+
+
+      /* =========================
+         DOUYIN
+         ========================= */
+
+      else if (
+        hostname === "douyin.com" ||
+        hostname.endsWith(".douyin.com") ||
+        hostname === "iesdouyin.com" ||
+        hostname.endsWith(".iesdouyin.com")
+      ) {
+
+        platform = "Douyin";
+
+      }
+
+
+      /* =========================
+         HIỂN THỊ KẾT QUẢ
+         ========================= */
+
+      if (platform === "Không xác định") {
+
+        result.innerHTML =
+          '<span class="warning">' +
+          '⚠️ Chưa nhận diện được nền tảng.' +
+          '</span>' +
+
+          '<br><br>' +
+
+          'Tên miền nhận được: ' +
+
+          '<span class="platform">' +
+          hostname +
+          '</span>';
+
+      }
+
+      else {
+
+        result.innerHTML =
+          '<span class="success">' +
+          '✅ Đã nhận liên kết' +
+          '</span>' +
+
+          '<br><br>' +
+
+          'Nền tảng: ' +
+
+          '<span class="platform">' +
+          platform +
+          '</span>' +
+
+          '<br><br>' +
+
+          '<span class="warning">' +
+          '⏳ Chức năng lấy thông tin và tải video ' +
+          'sẽ được kết nối ở bước tiếp theo.' +
+          '</span>';
+
+      }
+
     }
+
   </script></body>
 </html>
