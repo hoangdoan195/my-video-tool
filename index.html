@@ -18,7 +18,12 @@
       font-family: Arial, sans-serif;
 
       background:
-        radial-gradient(circle at top, #1e3a8a 0%, #111827 45%, #030712 100%);
+        radial-gradient(
+          circle at top,
+          #1e3a8a 0%,
+          #111827 45%,
+          #030712 100%
+        );
 
       color: white;
     }
@@ -51,22 +56,30 @@
 
     .subtitle {
       margin: 10px 0 25px;
+
       text-align: center;
+
       color: #9ca3af;
+
       line-height: 1.5;
     }
 
     label {
       display: block;
+
       margin-bottom: 8px;
+
       font-size: 14px;
+
       color: #d1d5db;
+
       font-weight: bold;
     }
 
     textarea {
       width: 100%;
-      min-height: 120px;
+
+      min-height: 130px;
 
       padding: 16px;
 
@@ -108,7 +121,11 @@
       border-radius: 14px;
 
       background:
-        linear-gradient(135deg, #2563eb, #4f46e5);
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #4f46e5
+        );
 
       color: white;
 
@@ -148,6 +165,7 @@
 
     .platform {
       color: #60a5fa;
+
       font-weight: bold;
     }
 
@@ -190,29 +208,38 @@
 
       font-size: 12px;
     }
-  </style></head><body>  <div class="app"><div class="logo">🎬</div>
+  </style></head><body>  <div class="app"><div class="logo">
+  🎬
+</div>
 
-<h1>My Video Tool</h1>
+<h1>
+  My Video Tool
+</h1>
 
 <p class="subtitle">
-  Dán liên kết video hoặc toàn bộ nội dung sao chép
+  Dán liên kết video hoặc toàn bộ nội dung chia sẻ
 </p>
+
 
 <label for="videoUrl">
   Liên kết / nội dung chia sẻ
 </label>
 
+
 <textarea
   id="videoUrl"
-  placeholder="Dán link video vào đây..."
+  placeholder="Dán link YouTube, TikTok, Facebook, Douyin..."
   autocomplete="off"
 ></textarea>
+
 
 <button onclick="analyzeVideo()">
   🔍 PHÂN TÍCH VIDEO
 </button>
 
+
 <div id="result"></div>
+
 
 <div class="footer">
   My Video Tool • Phiên bản thử nghiệm
@@ -221,181 +248,207 @@
   </div>  <script>
 
     /*
-      Tìm URL nằm bên trong toàn bộ đoạn văn bản.
-
-      Ví dụ Douyin:
-
-      0.58 复制打开抖音，看看【...】
-      https://v.douyin.com/n9pWduf74gg/
-      01/06 :7pm bNw:/ ...
-
-      Web sẽ tự lấy:
-      https://v.douyin.com/n9pWduf74gg/
+      ==========================================
+      TÌM URL TRONG NỘI DUNG ĐƯỢC SAO CHÉP
+      ==========================================
     */
 
     function extractUrl(text) {
 
-      const urlRegex =
-        /https?:\/\/[^\s"'<>]+/gi;
-
-      const matches =
-        text.match(urlRegex);
-
-      if (!matches || matches.length === 0) {
-        return null;
-      }
-
-      let url = matches[0];
-
       /*
-        Xóa các ký tự thừa có thể dính
-        ở cuối URL khi sao chép.
+        Tìm URL http/https trong cả đoạn văn.
       */
 
-      url = url.replace(
-        /[)\]}>，。！？；：]+$/g,
-        ""
+      const urlMatches = text.match(
+        /https?:\/\/[^\s"'<>]+/gi
       );
 
-      return url;
+
+      if (urlMatches && urlMatches.length > 0) {
+
+        let url = urlMatches[0];
+
+        /*
+          Xóa ký tự thừa ở cuối URL.
+        */
+
+        url = url.replace(
+          /[)\]}>，。！？；：]+$/g,
+          ""
+        );
+
+        return url;
+      }
+
+
+      /*
+        Một số nội dung chia sẻ có thể
+        không giữ nguyên http/https.
+      */
+
+      const shortDouyin = text.match(
+        /(?:v\.douyin\.com|douyin\.com|iesdouyin\.com)\/[A-Za-z0-9?=&._~\/-]+/i
+      );
+
+
+      if (shortDouyin) {
+
+        return "https://" + shortDouyin[0];
+      }
+
+
+      /*
+        Không tìm thấy URL.
+      */
+
+      return null;
     }
 
 
     /*
-      Nhận diện nền tảng
+      ==========================================
+      NHẬN DIỆN NỀN TẢNG
+      ==========================================
     */
 
     function detectPlatform(url) {
 
-      let hostname;
-
       try {
 
-        hostname =
+        const hostname =
           new URL(url)
             .hostname
             .toLowerCase()
             .replace(/^www\./, "");
 
-      } catch (error) {
+
+        /*
+          YOUTUBE
+        */
+
+        if (
+          hostname === "youtube.com" ||
+          hostname.endsWith(".youtube.com") ||
+          hostname === "youtu.be"
+        ) {
+
+          return {
+            name: "YouTube",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          TIKTOK
+        */
+
+        if (
+          hostname === "tiktok.com" ||
+          hostname.endsWith(".tiktok.com")
+        ) {
+
+          return {
+            name: "TikTok",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          FACEBOOK
+        */
+
+        if (
+          hostname === "facebook.com" ||
+          hostname.endsWith(".facebook.com") ||
+          hostname === "fb.watch"
+        ) {
+
+          return {
+            name: "Facebook",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          INSTAGRAM
+        */
+
+        if (
+          hostname === "instagram.com" ||
+          hostname.endsWith(".instagram.com")
+        ) {
+
+          return {
+            name: "Instagram",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          X / TWITTER
+        */
+
+        if (
+          hostname === "x.com" ||
+          hostname.endsWith(".x.com") ||
+          hostname === "twitter.com" ||
+          hostname.endsWith(".twitter.com")
+        ) {
+
+          return {
+            name: "X / Twitter",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          DOUYIN
+        */
+
+        if (
+          hostname === "douyin.com" ||
+          hostname.endsWith(".douyin.com") ||
+          hostname === "iesdouyin.com" ||
+          hostname.endsWith(".iesdouyin.com")
+        ) {
+
+          return {
+            name: "Douyin",
+            hostname: hostname
+          };
+        }
+
+
+        /*
+          Không xác định
+        */
 
         return {
-          platform: null,
+          name: null,
+          hostname: hostname
+        };
+
+      }
+
+      catch (error) {
+
+        return {
+          name: null,
           hostname: null
         };
-
       }
-
-
-      /* YouTube */
-
-      if (
-        hostname === "youtube.com" ||
-        hostname.endsWith(".youtube.com") ||
-        hostname === "youtu.be"
-      ) {
-
-        return {
-          platform: "YouTube",
-          hostname: hostname
-        };
-
-      }
-
-
-      /* TikTok */
-
-      if (
-        hostname === "tiktok.com" ||
-        hostname.endsWith(".tiktok.com") ||
-        hostname === "vm.tiktok.com" ||
-        hostname.endsWith(".tiktok.com")
-      ) {
-
-        return {
-          platform: "TikTok",
-          hostname: hostname
-        };
-
-      }
-
-
-      /* Facebook */
-
-      if (
-        hostname === "facebook.com" ||
-        hostname.endsWith(".facebook.com") ||
-        hostname === "fb.watch"
-      ) {
-
-        return {
-          platform: "Facebook",
-          hostname: hostname
-        };
-
-      }
-
-
-      /* Instagram */
-
-      if (
-        hostname === "instagram.com" ||
-        hostname.endsWith(".instagram.com")
-      ) {
-
-        return {
-          platform: "Instagram",
-          hostname: hostname
-        };
-
-      }
-
-
-      /* X / Twitter */
-
-      if (
-        hostname === "x.com" ||
-        hostname.endsWith(".x.com") ||
-        hostname === "twitter.com" ||
-        hostname.endsWith(".twitter.com")
-      ) {
-
-        return {
-          platform: "X / Twitter",
-          hostname: hostname
-        };
-
-      }
-
-
-      /* Douyin */
-
-      if (
-        hostname === "douyin.com" ||
-        hostname.endsWith(".douyin.com") ||
-        hostname === "v.douyin.com" ||
-        hostname.endsWith(".v.douyin.com") ||
-        hostname === "iesdouyin.com" ||
-        hostname.endsWith(".iesdouyin.com")
-      ) {
-
-        return {
-          platform: "Douyin",
-          hostname: hostname
-        };
-
-      }
-
-
-      return {
-        platform: null,
-        hostname: hostname
-      };
     }
 
 
     /*
-      Phân tích
+      ==========================================
+      PHÂN TÍCH VIDEO
+      ==========================================
     */
 
     function analyzeVideo() {
@@ -406,6 +459,7 @@
       const result =
         document.getElementById("result");
 
+
       const text =
         input.value.trim();
 
@@ -413,7 +467,9 @@
       result.style.display = "block";
 
 
-      /* Không có nội dung */
+      /*
+        Không nhập gì
+      */
 
       if (!text) {
 
@@ -427,69 +483,80 @@
 
 
       /*
-        Tự tìm URL trong toàn bộ
-        nội dung được dán.
+        Tìm URL trong toàn bộ nội dung.
       */
 
-      const extractedUrl =
+      const url =
         extractUrl(text);
 
 
-      if (!extractedUrl) {
+      /*
+        Không tìm thấy URL.
+      */
+
+      if (!url) {
 
         result.innerHTML =
+
           '<span class="error">' +
-          '❌ Không tìm thấy liên kết trong nội dung bạn dán.' +
-          '</span>';
+          '❌ Không tìm thấy liên kết video.' +
+          '</span>' +
+
+          '<br><br>' +
+
+          'Bạn có thể dán nguyên nội dung được ' +
+          'sao chép từ Douyin.';
 
         return;
       }
 
 
       /*
-        Nhận diện nền tảng
+        Nhận diện nền tảng.
       */
 
-      const detected =
-        detectPlatform(extractedUrl);
+      const platform =
+        detectPlatform(url);
 
 
-      if (!detected.platform) {
+      /*
+        Không nhận diện được.
+      */
+
+      if (!platform.name) {
 
         result.innerHTML =
 
           '<span class="warning">' +
-          '⚠️ Chưa nhận diện được nền tảng.' +
+          '⚠️ Đã tìm thấy liên kết nhưng chưa nhận diện được nền tảng.' +
           '</span>' +
 
           '<br><br>' +
 
-          'Tên miền nhận được: ' +
+          'Tên miền:' +
 
-          '<span class="platform">' +
-          detected.hostname +
-          '</span>' +
+          '<div class="detected-url">' +
+          platform.hostname +
+          '</div>' +
 
-          '<br><br>' +
+          'Liên kết:' +
 
-          'Liên kết đã tìm thấy:' +
-
-          '<span class="detected-url">' +
-          extractedUrl +
-          '</span>';
+          '<div class="detected-url">' +
+          url +
+          '</div>';
 
         return;
       }
 
 
       /*
-        Hiển thị thành công
+        Thành công.
       */
 
       result.innerHTML =
 
         '<span class="success">' +
-        '✅ Đã nhận liên kết' +
+        '✅ Đã nhận liên kết!' +
         '</span>' +
 
         '<br><br>' +
@@ -497,18 +564,18 @@
         'Nền tảng: ' +
 
         '<span class="platform">' +
-        detected.platform +
+        platform.name +
         '</span>' +
 
         '<br><br>' +
 
         'Liên kết đã tìm thấy:' +
 
-        '<span class="detected-url">' +
-        extractedUrl +
-        '</span>' +
+        '<div class="detected-url">' +
+        url +
+        '</div>' +
 
-        '<br><br>' +
+        '<br>' +
 
         '<span class="warning">' +
         '⏳ Chức năng lấy thông tin và tải video ' +
