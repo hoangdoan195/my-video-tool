@@ -1,66 +1,102 @@
-<!DOCTYPE html>
-<html lang="vi">
+<!DOCTYPE html><html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Video Tool</title>
-
-  <style>
+  <title>My Video Tool</title>  <style>
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: white;
       min-height: 100vh;
+      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, #1e3a8a 0%, #111827 45%, #030712 100%);
+      color: white;
     }
 
     .app {
       width: 100%;
-      max-width: 500px;
-      background: #1f2937;
-      padding: 25px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+      max-width: 520px;
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px;
+      background: rgba(31,41,55,.92);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 48px;
+      margin-bottom: 8px;
     }
 
     h1 {
+      margin: 0;
       text-align: center;
-      margin-top: 0;
+      font-size: 28px;
     }
 
-    p {
+    .subtitle {
+      margin: 10px 0 25px;
       text-align: center;
       color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #d1d5db;
+      font-weight: bold;
+    }
+
+    .input-box {
+      position: relative;
     }
 
     input {
       width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      margin-top: 15px;
-      font-size: 16px;
+      padding: 16px;
+      border: 1px solid #4b5563;
+      border-radius: 14px;
       outline: none;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    input::placeholder {
+      color: #6b7280;
     }
 
     button {
       width: 100%;
-      padding: 15px;
-      margin-top: 12px;
+      margin-top: 14px;
+      padding: 16px;
       border: none;
-      border-radius: 12px;
-      background: #2563eb;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
       color: white;
       font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
     }
 
     button:active {
@@ -68,54 +104,119 @@
     }
 
     #result {
-      margin-top: 20px;
-      padding: 15px;
-      background: #374151;
-      border-radius: 12px;
       display: none;
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #111827;
+      border: 1px solid #374151;
+      line-height: 1.6;
     }
-  </style>
-</head>
 
-<body>
+    .platform {
+      color: #60a5fa;
+      font-weight: bold;
+    }
 
-  <div class="app">
+    .success {
+      color: #4ade80;
+    }
 
-    <h1>🎬 My Video Tool</h1>
+    .warning {
+      color: #fbbf24;
+    }
 
-    <p>Dán liên kết video vào bên dưới</p>
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 12px;
+    }
+  </style></head><body>  <div class="app"><div class="logo">🎬</div>
 
-    <input
-      id="videoUrl"
-      type="url"
-      placeholder="https://..."
-    >
+<h1>My Video Tool</h1>
 
-    <button onclick="analyzeVideo()">
-      PHÂN TÍCH
-    </button>
+<p class="subtitle">
+  Dán liên kết video để bắt đầu
+</p>
 
-    <div id="result"></div>
+<label for="videoUrl">Liên kết video</label>
 
-  </div>
+<div class="input-box">
+  <input
+    id="videoUrl"
+    type="url"
+    placeholder="https://..."
+    autocomplete="off"
+  >
+</div>
 
-  <script>
+<button onclick="analyzeVideo()">
+  🔍 PHÂN TÍCH VIDEO
+</button>
+
+<div id="result"></div>
+
+<div class="footer">
+  My Video Tool • Phiên bản thử nghiệm
+</div>
+
+  </div>  <script>
     function analyzeVideo() {
-      const url = document.getElementById("videoUrl").value.trim();
+      const input = document.getElementById("videoUrl");
       const result = document.getElementById("result");
 
+      const url = input.value.trim();
+
+      result.style.display = "block";
+
       if (!url) {
-        result.style.display = "block";
-        result.innerHTML = "⚠️ Hãy dán một liên kết trước.";
+        result.innerHTML =
+          '<span class="warning">⚠️ Hãy dán liên kết video trước.</span>';
         return;
       }
 
-      result.style.display = "block";
-      result.innerHTML =
-        "✅ Đã nhận liên kết!<br><br>" +
-        "Bước tiếp theo chúng ta sẽ kết nối chức năng phân tích video.";
-    }
-  </script>
+      let platform = "Không xác định";
 
-</body>
+      try {
+        const hostname = new URL(url).hostname.toLowerCase();
+
+        if (
+          hostname.includes("youtube.com") ||
+          hostname.includes("youtu.be")
+        ) {
+          platform = "YouTube";
+        } else if (
+          hostname.includes("tiktok.com")
+        ) {
+          platform = "TikTok";
+        } else if (
+          hostname.includes("facebook.com") ||
+          hostname.includes("fb.watch")
+        ) {
+          platform = "Facebook";
+        } else if (
+          hostname.includes("instagram.com")
+        ) {
+          platform = "Instagram";
+        } else if (
+          hostname.includes("x.com") ||
+          hostname.includes("twitter.com")
+        ) {
+          platform = "X / Twitter";
+        }
+      } catch (error) {
+        result.innerHTML =
+          '<span class="warning">⚠️ Liên kết không hợp lệ.</span>';
+        return;
+      }
+
+      result.innerHTML =
+        '<span class="success">✅ Đã nhận liên kết</span><br><br>' +
+        'Nền tảng: <span class="platform">' +
+        platform +
+        '</span><br><br>' +
+        '<span class="warning">⏳ Chức năng lấy thông tin và tải video sẽ được kết nối ở bước tiếp theo.</span>';
+    }
+  </script></body>
 </html>
