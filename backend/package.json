@@ -9,6 +9,6 @@
 "dependencies": {
 "express": "^4.21.2",
 "cors": "^2.8.5",
-"youtubei.js": "^14.0.0"
+"youtubei.js": "^18.0.0"
 }
 }
