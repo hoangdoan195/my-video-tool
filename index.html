@@ -10,7 +10,6 @@ content="width=device-width, initial-scale=1.0"
       box-sizing: border-box;
     }
 
-
     body {
 
       margin: 0;
@@ -39,24 +38,24 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
-
     .app {
 
       width: 100%;
 
-      max-width: 540px;
+      max-width: 560px;
 
       padding: 30px;
 
       border-radius: 24px;
 
-      background: #1f2937;
+      background: rgba(31,41,55,.97);
+
+      border: 1px solid rgba(255,255,255,.08);
 
       box-shadow:
         0 20px 60px rgba(0,0,0,.45);
 
     }
-
 
     .logo {
 
@@ -68,7 +67,6 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
-
     h1 {
 
       margin: 0;
@@ -78,7 +76,6 @@ content="width=device-width, initial-scale=1.0"
       font-size: 28px;
 
     }
-
 
     .subtitle {
 
@@ -91,7 +88,6 @@ content="width=device-width, initial-scale=1.0"
       margin: 10px 0 25px;
 
     }
-
 
     label {
 
@@ -106,7 +102,6 @@ content="width=device-width, initial-scale=1.0"
       font-weight: bold;
 
     }
-
 
     textarea {
 
@@ -136,17 +131,14 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
-
     textarea:focus {
 
       border-color: #3b82f6;
 
       box-shadow:
-        0 0 0 3px
-        rgba(59,130,246,.15);
+        0 0 0 3px rgba(59,130,246,.15);
 
     }
-
 
     textarea::placeholder {
 
@@ -154,8 +146,7 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
-
-    button {
+    .analyze-button {
 
       width: 100%;
 
@@ -182,10 +173,23 @@ content="width=device-width, initial-scale=1.0"
 
       cursor: pointer;
 
+      transition: .2s;
+
     }
 
+    .analyze-button:hover {
 
-    button:disabled {
+      filter: brightness(1.1);
+
+    }
+
+    .analyze-button:active {
+
+      transform: scale(.98);
+
+    }
+
+    .analyze-button:disabled {
 
       opacity: .6;
 
@@ -193,16 +197,63 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
-
     #result {
 
       display: none;
 
-      margin-top: 20px;
+      margin-top: 22px;
 
-      padding: 18px;
+    }
 
-      border-radius: 16px;
+    .status {
+
+      padding: 12px 14px;
+
+      border-radius: 12px;
+
+      font-size: 14px;
+
+      font-weight: bold;
+
+    }
+
+    .success {
+
+      color: #86efac;
+
+      background: rgba(34,197,94,.10);
+
+      border: 1px solid rgba(34,197,94,.20);
+
+    }
+
+    .error {
+
+      color: #fca5a5;
+
+      background: rgba(239,68,68,.10);
+
+      border: 1px solid rgba(239,68,68,.20);
+
+    }
+
+    .warning {
+
+      color: #fcd34d;
+
+      background: rgba(245,158,11,.10);
+
+      border: 1px solid rgba(245,158,11,.20);
+
+    }
+
+    .video-card {
+
+      margin-top: 14px;
+
+      overflow: hidden;
+
+      border-radius: 18px;
 
       background: #111827;
 
@@ -210,43 +261,15 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
+    .thumbnail-wrapper {
 
-    .success {
+      position: relative;
 
-      color: #4ade80;
+      width: 100%;
 
-    }
-
-
-    .error {
-
-      color: #f87171;
+      background: #030712;
 
     }
-
-
-    .warning {
-
-      color: #fbbf24;
-
-    }
-
-
-    .platform {
-
-      color: #60a5fa;
-
-      font-weight: bold;
-
-    }
-
-
-    .video-card {
-
-      margin-top: 15px;
-
-    }
-
 
     .thumbnail {
 
@@ -254,46 +277,77 @@ content="width=device-width, initial-scale=1.0"
 
       display: block;
 
-      border-radius: 12px;
+      aspect-ratio: 16 / 9;
 
-      margin-bottom: 15px;
+      object-fit: cover;
 
     }
 
+    .platform-badge {
+
+      position: absolute;
+
+      left: 12px;
+
+      top: 12px;
+
+      padding: 7px 10px;
+
+      border-radius: 8px;
+
+      background: rgba(0,0,0,.75);
+
+      backdrop-filter: blur(5px);
+
+      font-size: 12px;
+
+      font-weight: bold;
+
+    }
+
+    .video-content {
+
+      padding: 18px;
+
+    }
 
     .video-title {
 
-      font-size: 19px;
+      font-size: 20px;
 
       font-weight: bold;
 
       line-height: 1.4;
 
-      margin-bottom: 12px;
+      margin-bottom: 14px;
 
     }
-
 
     .video-info {
 
-      color: #9ca3af;
+      color: #d1d5db;
 
       font-size: 14px;
 
-      line-height: 1.8;
+      line-height: 2;
 
     }
 
+    .info-label {
+
+      color: #9ca3af;
+
+    }
 
     .video-url {
 
       display: block;
 
-      margin-top: 12px;
+      margin-top: 14px;
 
       padding: 10px;
 
-      border-radius: 8px;
+      border-radius: 9px;
 
       background: #1f2937;
 
@@ -305,6 +359,35 @@ content="width=device-width, initial-scale=1.0"
 
     }
 
+    .next-button {
+
+      width: 100%;
+
+      margin-top: 16px;
+
+      padding: 14px;
+
+      border: 1px solid #374151;
+
+      border-radius: 12px;
+
+      background: #1f2937;
+
+      color: white;
+
+      font-size: 15px;
+
+      font-weight: bold;
+
+      cursor: pointer;
+
+    }
+
+    .next-button:hover {
+
+      background: #374151;
+
+    }
 
     .footer {
 
@@ -322,11 +405,9 @@ content="width=device-width, initial-scale=1.0"
   🎬
 </div>
 
-
 <h1>
   My Video Tool
 </h1>
-
 
 <p class="subtitle">
   Dán liên kết video hoặc nội dung chia sẻ
@@ -346,6 +427,7 @@ content="width=device-width, initial-scale=1.0"
 
 <button
   id="analyzeButton"
+  class="analyze-button"
   onclick="analyzeVideo()"
 >
   🔍 PHÂN TÍCH VIDEO
@@ -360,7 +442,6 @@ content="width=device-width, initial-scale=1.0"
 </div>
 
   </div>  <script>
-
 
     const API_URL =
       "https://my-video-tool-api.onrender.com";
@@ -389,8 +470,7 @@ content="width=device-width, initial-scale=1.0"
 
 
       /*
-        Hỗ trợ link Douyin khi người dùng
-        dán cả đoạn chia sẻ
+        Hỗ trợ nội dung chia sẻ Douyin
       */
 
       const douyin =
@@ -412,14 +492,16 @@ content="width=device-width, initial-scale=1.0"
 
 
     /*
-      Định dạng thời lượng ISO 8601
-      Ví dụ PT5M32S → 05:32
+      Đổi thời lượng ISO 8601
+      PT5M32S → 05:32
     */
 
     function formatDuration(duration) {
 
       if (!duration) {
+
         return "Không có thông tin";
+
       }
 
 
@@ -430,7 +512,9 @@ content="width=device-width, initial-scale=1.0"
 
 
       if (!match) {
+
         return duration;
+
       }
 
 
@@ -449,20 +533,30 @@ content="width=device-width, initial-scale=1.0"
       if (hours > 0) {
 
         return (
+
           String(hours).padStart(2, "0") +
+
           ":" +
+
           String(minutes).padStart(2, "0") +
+
           ":" +
+
           String(seconds).padStart(2, "0")
+
         );
 
       }
 
 
       return (
+
         String(minutes).padStart(2, "0") +
+
         ":" +
+
         String(seconds).padStart(2, "0")
+
       );
 
     }
@@ -474,14 +568,11 @@ content="width=device-width, initial-scale=1.0"
 
     async function analyzeVideo() {
 
-
       const input =
         document.getElementById("videoUrl");
 
-
       const result =
         document.getElementById("result");
-
 
       const button =
         document.getElementById("analyzeButton");
@@ -497,9 +588,9 @@ content="width=device-width, initial-scale=1.0"
       if (!text) {
 
         result.innerHTML =
-          '<span class="warning">' +
+          '<div class="status warning">' +
           '⚠️ Hãy dán liên kết video trước.' +
-          '</span>';
+          '</div>';
 
         return;
 
@@ -513,9 +604,9 @@ content="width=device-width, initial-scale=1.0"
       if (!url) {
 
         result.innerHTML =
-          '<span class="error">' +
+          '<div class="status error">' +
           '❌ Không tìm thấy liên kết video.' +
-          '</span>';
+          '</div>';
 
         return;
 
@@ -529,13 +620,12 @@ content="width=device-width, initial-scale=1.0"
 
 
       result.innerHTML =
-        '<span class="warning">' +
+        '<div class="status warning">' +
         '⏳ Đang lấy thông tin video...' +
-        '</span>';
+        '</div>';
 
 
       try {
-
 
         const response =
           await fetch(
@@ -570,12 +660,7 @@ content="width=device-width, initial-scale=1.0"
         }
 
 
-        /*
-          Nếu backend trả video
-        */
-
         if (data.video) {
-
 
           const video =
             data.video;
@@ -584,18 +669,30 @@ content="width=device-width, initial-scale=1.0"
           const thumbnail =
             video.thumbnail
               ? `
-                <img
-                  class="thumbnail"
-                  src="${video.thumbnail}"
-                  alt="Thumbnail video"
-                >
+
+                <div class="thumbnail-wrapper">
+
+                  <img
+                    class="thumbnail"
+                    src="${escapeHtml(video.thumbnail)}"
+                    alt="Thumbnail video"
+                  >
+
+                  <div class="platform-badge">
+                    🎬 ${escapeHtml(
+                      data.platform || "Video"
+                    )}
+                  </div>
+
+                </div>
+
               `
               : "";
 
 
           result.innerHTML = `
 
-            <div class="success">
+            <div class="status success">
               ✅ Phân tích thành công!
             </div>
 
@@ -605,70 +702,104 @@ content="width=device-width, initial-scale=1.0"
               ${thumbnail}
 
 
-              <div class="video-title">
-                ${escapeHtml(
-                  video.title ||
-                  "Không có tiêu đề"
-                )}
-              </div>
+              <div class="video-content">
 
 
-              <div class="video-info">
+                <div class="video-title">
 
-                📺 Nền tảng:
-                <span class="platform">
                   ${escapeHtml(
-                    data.platform || "YouTube"
+                    video.title ||
+                    "Không có tiêu đề"
                   )}
-                </span>
 
-                <br>
-
-                👤 Kênh:
-                ${escapeHtml(
-                  video.channel ||
-                  "Không có thông tin"
-                )}
-
-                <br>
-
-                ⏱️ Thời lượng:
-                ${formatDuration(
-                  video.duration
-                )}
-
-              </div>
+                </div>
 
 
-              <div class="video-url">
-                ${escapeHtml(
-                  data.url || url
-                )}
+                <div class="video-info">
+
+                  <span class="info-label">
+                    👤 Kênh:
+                  </span>
+
+                  ${escapeHtml(
+                    video.channel ||
+                    "Không có thông tin"
+                  )}
+
+                  <br>
+
+
+                  <span class="info-label">
+                    ⏱️ Thời lượng:
+                  </span>
+
+                  ${formatDuration(
+                    video.duration
+                  )}
+
+                  <br>
+
+
+                  <span class="info-label">
+                    🌐 Nền tảng:
+                  </span>
+
+                  ${escapeHtml(
+                    data.platform ||
+                    "Không xác định"
+                  )}
+
+                </div>
+
+
+                <div class="video-url">
+
+                  ${escapeHtml(
+                    data.url || url
+                  )}
+
+                </div>
+
+
+                <button
+                  class="next-button"
+                  onclick="prepareNextStep()"
+                >
+                  ⬇️ TIẾP TỤC
+                </button>
+
+
               </div>
 
             </div>
 
           `;
 
+        }
 
-        } else {
 
+        else {
 
           result.innerHTML =
 
-            '<span class="success">' +
+            '<div class="status success">' +
+
             '✅ Backend đã nhận liên kết!' +
-            '</span>' +
 
             '<br><br>' +
 
             'Nền tảng: ' +
 
             '<span class="platform">' +
+
             escapeHtml(
-              data.platform || "Không xác định"
+              data.platform ||
+              "Không xác định"
             ) +
-            '</span>';
+
+            '</span>' +
+
+            '</div>';
 
         }
 
@@ -678,23 +809,26 @@ content="width=device-width, initial-scale=1.0"
 
       catch (error) {
 
-
         console.error(error);
 
 
         result.innerHTML =
 
-          '<span class="error">' +
+          '<div class="status error">' +
+
           '❌ Không lấy được thông tin video.' +
-          '</span>' +
 
           '<br><br>' +
 
           '<span class="warning">' +
+
           escapeHtml(
             error.message
           ) +
-          '</span>';
+
+          '</span>' +
+
+          '</div>';
 
       }
 
@@ -712,19 +846,52 @@ content="width=device-width, initial-scale=1.0"
 
 
     /*
-      Tránh chèn HTML không an toàn
+      Nút TIẾP TỤC hiện chỉ là giao diện.
+      Chúng ta sẽ gắn chức năng thật ở bước sau.
+    */
+
+    function prepareNextStep() {
+
+      alert(
+        "Thông tin video đã sẵn sàng. Chức năng tiếp theo sẽ được xây dựng ở bước sau."
+      );
+
+    }
+
+
+    /*
+      Bảo vệ nội dung hiển thị HTML
     */
 
     function escapeHtml(value) {
 
       return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+
+        .replace(
+          /</g,
+          "&lt;"
+        )
+
+        .replace(
+          />/g,
+          "&gt;"
+        )
+
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+
+        .replace(
+          /'/g,
+          "&#039;"
+        );
 
     }
-
 
   </script></body></html>
