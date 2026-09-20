@@ -42,10 +42,6 @@ const host =
     .replace(/^www\./, "");
 
 
-/*
-  youtu.be/VIDEO_ID
-*/
-
 if (host === "youtu.be") {
 
   return parsed.pathname
@@ -54,10 +50,6 @@ if (host === "youtu.be") {
 
 }
 
-
-/*
-  youtube.com/watch?v=VIDEO_ID
-*/
 
 if (
   host === "youtube.com" ||
@@ -74,10 +66,6 @@ if (
   }
 
 
-  /*
-    /shorts/VIDEO_ID
-  */
-
   const parts =
     parsed.pathname
       .split("/")
@@ -93,10 +81,6 @@ if (
 
   }
 
-
-  /*
-    /live/VIDEO_ID
-  */
 
   if (
     parts[0] === "live" &&
@@ -138,13 +122,155 @@ const host =
 
 
 return (
+
   host === "tiktok.com" ||
+
   host.endsWith(".tiktok.com")
+
 );
 
 } catch (error) {
 
 return false;
+
+}
+
+}
+
+/*
+Kiểm tra link TikTok rút gọn
+*/
+
+function isTikTokShortUrl(url) {
+
+try {
+
+const parsed =
+  new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+
+return (
+
+  host === "vt.tiktok.com" ||
+
+  host === "vm.tiktok.com"
+
+);
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+/*
+Theo redirect của TikTok
+*/
+
+async function resolveTikTokUrl(url) {
+
+try {
+
+const response =
+  await fetch(
+
+    url,
+
+    {
+
+      method: "HEAD",
+
+      redirect: "manual",
+
+      headers: {
+
+        "User-Agent":
+          "Mozilla/5.0"
+
+      }
+
+    }
+
+  );
+
+
+/*
+  TikTok thường trả URL đích
+  trong Location.
+*/
+
+const location =
+  response.headers.get(
+    "location"
+  );
+
+
+if (location) {
+
+  return location;
+
+}
+
+
+/*
+  Một số trường hợp HEAD
+  không trả Location.
+  Thử GET.
+*/
+
+const getResponse =
+  await fetch(
+
+    url,
+
+    {
+
+      method: "GET",
+
+      redirect: "manual",
+
+      headers: {
+
+        "User-Agent":
+          "Mozilla/5.0"
+
+      }
+
+    }
+
+  );
+
+
+const getLocation =
+  getResponse.headers.get(
+    "location"
+  );
+
+
+if (getLocation) {
+
+  return getLocation;
+
+}
+
+
+return null;
+
+} catch (error) {
+
+console.error(
+  "TikTok redirect error:",
+  error.message
+);
+
+return null;
 
 }
 
@@ -168,7 +294,8 @@ if (!url) {
 
     success: false,
 
-    message: "Thiếu URL."
+    message:
+      "Thiếu URL."
 
   });
 
@@ -293,7 +420,8 @@ if (youtubeVideoId) {
 
       success: true,
 
-      platform: "YouTube",
+      platform:
+        "YouTube",
 
       url: url,
 
@@ -358,24 +486,91 @@ if (youtubeVideoId) {
 
 /*
   ====================================
-  TIKTOK
+  TIKTOK LINK RÚT GỌN
   ====================================
 */
 
-if (isTikTokUrl(url)) {
+if (
+  isTikTokShortUrl(url)
+) {
+
+  console.log(
+    "TikTok short URL:",
+    url
+  );
+
+
+  const resolvedUrl =
+    await resolveTikTokUrl(url);
+
+
+  if (!resolvedUrl) {
+
+    return res.status(502).json({
+
+      success: false,
+
+      platform:
+        "TikTok",
+
+      message:
+        "Không thể xác định URL TikTok đích."
+
+    });
+
+  }
+
+
+  console.log(
+    "TikTok resolved URL:",
+    resolvedUrl
+  );
+
 
   return res.json({
 
     success: true,
 
-    platform: "TikTok",
+    platform:
+      "TikTok",
 
-    url: url,
+    url:
+      resolvedUrl,
+
+    video: null,
 
     message:
-      "Đã nhận diện liên kết TikTok.",
+      "Đã xác định URL TikTok đích."
 
-    video: null
+  });
+
+}
+
+
+/*
+  ====================================
+  TIKTOK URL ĐẦY ĐỦ
+  ====================================
+*/
+
+if (
+  isTikTokUrl(url)
+) {
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "TikTok",
+
+    url:
+      url,
+
+    video: null,
+
+    message:
+      "Đã nhận diện liên kết TikTok."
 
   });
 
