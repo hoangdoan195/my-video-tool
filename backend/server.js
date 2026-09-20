@@ -18,12 +18,8 @@ TRANG KIỂM TRA BACKEND
 app.get("/", (req, res) => {
 
 res.json({
-
 success: true,
-
-message:
-  "My Video Tool backend đang hoạt động!"
-
+message: "My Video Tool backend đang hoạt động!"
 });
 
 });
@@ -40,11 +36,9 @@ try {
 
 const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
 if (host === "youtu.be") {
 
@@ -54,7 +48,6 @@ if (host === "youtu.be") {
 
 }
 
-
 if (
   host === "youtube.com" ||
   host.endsWith(".youtube.com")
@@ -63,41 +56,30 @@ if (
   const videoId =
     parsed.searchParams.get("v");
 
-
   if (videoId) {
-
     return videoId;
-
   }
-
 
   const parts =
     parsed.pathname
       .split("/")
       .filter(Boolean);
 
-
   if (
     parts[0] === "shorts" &&
     parts[1]
   ) {
-
     return parts[1];
-
   }
-
 
   if (
     parts[0] === "live" &&
     parts[1]
   ) {
-
     return parts[1];
-
   }
 
 }
-
 
 return null;
 
@@ -119,21 +101,15 @@ function isTikTokUrl(url) {
 
 try {
 
-const parsed =
-  new URL(url);
+const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
 return (
-
   host === "tiktok.com" ||
-
   host.endsWith(".tiktok.com")
-
 );
 
 } catch (error) {
@@ -148,21 +124,15 @@ function isTikTokShortUrl(url) {
 
 try {
 
-const parsed =
-  new URL(url);
+const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
 return (
-
   host === "vt.tiktok.com" ||
-
   host === "vm.tiktok.com"
-
 );
 
 } catch (error) {
@@ -173,81 +143,33 @@ return false;
 
 }
 
+/*
+
+TIKTOK SHORT URL
+
+*/
+
 async function resolveTikTokUrl(url) {
 
 try {
 
-const response =
-  await fetch(
-
-    url,
-
-    {
-
-      method: "HEAD",
-
-      redirect: "manual",
-
-      headers: {
-
-        "User-Agent":
-          "Mozilla/5.0"
-
-      }
-
+const response = await fetch(
+  url,
+  {
+    method: "GET",
+    redirect: "manual",
+    headers: {
+      "User-Agent": "Mozilla/5.0"
     }
-
-  );
-
+  }
+);
 
 const location =
-  response.headers.get(
-    "location"
-  );
-
+  response.headers.get("location");
 
 if (location) {
-
   return location;
-
 }
-
-
-const getResponse =
-  await fetch(
-
-    url,
-
-    {
-
-      method: "GET",
-
-      redirect: "manual",
-
-      headers: {
-
-        "User-Agent":
-          "Mozilla/5.0"
-
-      }
-
-    }
-
-  );
-
-
-const getLocation =
-  getResponse.headers.get(
-    "location"
-  );
-
-
-if (getLocation) {
-
-  return getLocation;
-
-}
-
 
 return null;
 
@@ -255,6 +177,72 @@ return null;
 
 console.error(
   "TikTok redirect error:",
+  error.message
+);
+
+return null;
+
+}
+
+}
+
+/*
+
+TIKTOK OEMBED
+
+*/
+
+async function getTikTokMetadata(url) {
+
+try {
+
+const apiUrl =
+  "https://www.tiktok.com/oembed?url=" +
+  encodeURIComponent(url);
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0"
+      }
+    }
+  );
+
+if (!response.ok) {
+
+  return null;
+
+}
+
+const data =
+  await response.json();
+
+return {
+
+  title:
+    data.title || "",
+
+  channel:
+    data.author_name || "",
+
+  authorUrl:
+    data.author_url || "",
+
+  thumbnail:
+    data.thumbnail_url || "",
+
+  html:
+    data.html || ""
+
+};
+
+} catch (error) {
+
+console.error(
+  "TikTok oEmbed error:",
   error.message
 );
 
@@ -274,23 +262,16 @@ function isFacebookUrl(url) {
 
 try {
 
-const parsed =
-  new URL(url);
+const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
 return (
-
   host === "facebook.com" ||
-
   host === "fb.watch" ||
-
   host.endsWith(".facebook.com")
-
 );
 
 } catch (error) {
@@ -311,21 +292,15 @@ function isDouyinUrl(url) {
 
 try {
 
-const parsed =
-  new URL(url);
+const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
 return (
-
   host === "douyin.com" ||
-
   host.endsWith(".douyin.com")
-
 );
 
 } catch (error) {
@@ -340,20 +315,13 @@ function isDouyinShortUrl(url) {
 
 try {
 
-const parsed =
-  new URL(url);
+const parsed = new URL(url);
 
-const host =
-  parsed.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
+const host = parsed.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
-
-return (
-
-  host === "v.douyin.com"
-
-);
+return host === "v.douyin.com";
 
 } catch (error) {
 
@@ -365,23 +333,19 @@ return false;
 
 /*
 
-DOUYIN LINK TRONG ĐOẠN TEXT
+DÒ TÌM LINK DOUYIN TRONG TEXT
 
 */
 
 function extractDouyinUrl(text) {
 
 if (!text) {
-
 return null;
-
 }
 
 const match =
 text.match(
-
-  /https?:\/\/(?:v\.douyin\.com|www\.douyin\.com|douyin\.com|iesdouyin\.com)\/[A-Za-z0-9?=&._~\/%-]+/i
-
+/https?://(?:v.douyin.com|www.douyin.com|douyin.com|iesdouyin.com)/[A-Za-z0-9?=&._~/%-]+/i
 );
 
 if (match) {
@@ -399,7 +363,7 @@ return null;
 
 /*
 
-API PHÂN TÍCH
+API ANALYZE
 
 */
 
@@ -410,7 +374,6 @@ async (req, res) => {
 const originalUrl =
   req.body &&
   req.body.url;
-
 
 if (!originalUrl) {
 
@@ -425,20 +388,18 @@ if (!originalUrl) {
 
 }
 
-
 const url =
   String(originalUrl).trim();
 
 
 /*
-  ============================
-  YOUTUBE
-  ============================
+=================================
+YOUTUBE
+=================================
 */
 
 const youtubeVideoId =
   getYouTubeVideoId(url);
-
 
 if (youtubeVideoId) {
 
@@ -455,7 +416,6 @@ if (youtubeVideoId) {
 
   }
 
-
   try {
 
     const apiUrl =
@@ -470,14 +430,11 @@ if (youtubeVideoId) {
         YOUTUBE_API_KEY
       );
 
-
     const response =
       await fetch(apiUrl);
 
-
     const data =
       await response.json();
-
 
     if (!response.ok) {
 
@@ -485,7 +442,6 @@ if (youtubeVideoId) {
         "YouTube API error:",
         data
       );
-
 
       return res.status(502).json({
 
@@ -501,7 +457,6 @@ if (youtubeVideoId) {
       });
 
     }
-
 
     if (
       !data.items ||
@@ -519,22 +474,17 @@ if (youtubeVideoId) {
 
     }
 
-
     const video =
       data.items[0];
-
 
     const snippet =
       video.snippet || {};
 
-
     const contentDetails =
       video.contentDetails || {};
 
-
     const thumbnails =
       snippet.thumbnails || {};
-
 
     const thumbnail =
       thumbnails.maxres?.url ||
@@ -542,7 +492,6 @@ if (youtubeVideoId) {
       thumbnails.medium?.url ||
       thumbnails.default?.url ||
       null;
-
 
     return res.json({
 
@@ -586,14 +535,12 @@ if (youtubeVideoId) {
 
     });
 
-
   } catch (error) {
 
     console.error(
       "YouTube error:",
       error
     );
-
 
     return res.status(500).json({
 
@@ -614,9 +561,9 @@ if (youtubeVideoId) {
 
 
 /*
-  ============================
-  TIKTOK LINK RÚT GỌN
-  ============================
+=================================
+TIKTOK LINK RÚT GỌN
+=================================
 */
 
 if (
@@ -628,33 +575,39 @@ if (
     url
   );
 
-
   const resolvedUrl =
     await resolveTikTokUrl(url);
 
-
   if (!resolvedUrl) {
 
-    return res.status(502).json({
+    return res.json({
 
-      success: false,
+      success: true,
 
       platform:
         "TikTok",
 
+      url:
+        url,
+
+      video: null,
+
       message:
-        "Không thể xác định URL TikTok đích."
+        "Đã nhận diện TikTok nhưng chưa xác định được URL đích."
 
     });
 
   }
-
 
   console.log(
     "TikTok resolved URL:",
     resolvedUrl
   );
 
+  const metadata =
+    await getTikTokMetadata(
+      resolvedUrl
+    );
 
   return res.json({
 
@@ -666,10 +619,28 @@ if (
     url:
       resolvedUrl,
 
-    video: null,
+    video:
+      metadata
+        ? {
+            title:
+              metadata.title,
+
+            channel:
+              metadata.channel,
+
+            thumbnail:
+              metadata.thumbnail,
+
+            duration:
+              null
+
+          }
+        : null,
 
     message:
-      "Đã xác định URL TikTok đích."
+      metadata
+        ? "Đã lấy thông tin TikTok."
+        : "Đã xác định URL TikTok đích."
 
   });
 
@@ -677,14 +648,17 @@ if (
 
 
 /*
-  ============================
-  TIKTOK ĐẦY ĐỦ
-  ============================
+=================================
+TIKTOK URL ĐẦY ĐỦ
+=================================
 */
 
 if (
   isTikTokUrl(url)
 ) {
+
+  const metadata =
+    await getTikTokMetadata(url);
 
   return res.json({
 
@@ -696,10 +670,29 @@ if (
     url:
       url,
 
-    video: null,
+    video:
+      metadata
+        ? {
+
+            title:
+              metadata.title,
+
+            channel:
+              metadata.channel,
+
+            thumbnail:
+              metadata.thumbnail,
+
+            duration:
+              null
+
+          }
+        : null,
 
     message:
-      "Đã nhận diện liên kết TikTok."
+      metadata
+        ? "Đã lấy thông tin TikTok."
+        : "Đã nhận diện liên kết TikTok."
 
   });
 
@@ -707,9 +700,9 @@ if (
 
 
 /*
-  ============================
-  FACEBOOK
-  ============================
+=================================
+FACEBOOK
+=================================
 */
 
 if (
@@ -729,7 +722,7 @@ if (
     video: null,
 
     message:
-      "Đã nhận diện liên kết Facebook."
+      "Đã nhận diện liên kết Facebook. Metadata sẽ được xử lý nếu Facebook cho phép truy cập công khai."
 
   });
 
@@ -737,9 +730,9 @@ if (
 
 
 /*
-  ============================
-  DOUYIN
-  ============================
+=================================
+DOUYIN
+=================================
 */
 
 if (
@@ -768,10 +761,35 @@ if (
 
 
 /*
-  ============================
-  LINK CHƯA HỖ TRỢ
-  ============================
+=================================
+LINK KHÔNG HỖ TRỢ
+=================================
 */
+
+const douyinFromText =
+  extractDouyinUrl(url);
+
+if (douyinFromText) {
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "Douyin",
+
+    url:
+      douyinFromText,
+
+    video: null,
+
+    message:
+      "Đã tìm thấy liên kết Douyin trong nội dung chia sẻ."
+
+  });
+
+}
+
 
 return res.status(400).json({
 
