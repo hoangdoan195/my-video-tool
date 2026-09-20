@@ -492,311 +492,173 @@ content="width=device-width, initial-scale=1.0"
           Ví dụ YouTube
         */
 
-        if (data.video) {
+if (data.video) {
 
-          const video =
-            data.video;
+const video = data.video;
 
+const thumbnail =
+video.thumbnail
+? `
+<div class="thumbnail-wrapper">
 
-          const thumbnail =
-            video.thumbnail
-              ? `
+      <img
+        class="thumbnail"
+        src="${escapeHtml(video.thumbnail)}"
+        alt="Thumbnail video"
+        onerror="this.parentElement.style.display='none';"
+      >
 
-                <div class="thumbnail-wrapper">
+      <div class="platform-badge">
+        🎬 ${escapeHtml(
+          data.platform || "Video"
+        )}
+      </div>
 
-                  <img
-                    class="thumbnail"
-                    src="${escapeHtml(
-                      video.thumbnail
-                    )}"
-                    alt="Thumbnail video"
-                  >
+    </div>
+  `
+  : "";
 
-                  <div class="platform-badge">
-                    🎬 ${escapeHtml(
-                      data.platform || "Video"
-                    )}
-                  </div>
+result.innerHTML = `
 
-                </div>
+<div class="status success">
+  ✅ Đã lấy thông tin video!
+</div>
 
-              `
-              : "";
 
+<div class="video-card">
 
-          result.innerHTML = `
+  ${thumbnail}
 
-            <div class="status success">
 
-              ✅ Phân tích thành công!
+  <div class="video-content">
 
-            </div>
+    <div class="video-title">
 
+      ${escapeHtml(
+        video.title ||
+        "Không có tiêu đề"
+      )}
 
-            <div class="video-card">
+    </div>
 
-              ${thumbnail}
 
+    <div class="video-info">
 
-              <div class="video-content">
+      <span class="info-label">
+        👤 Kênh / Tác giả:
+      </span>
 
-                <div class="video-title">
+      ${escapeHtml(
+        video.channel ||
+        "Không có thông tin"
+      )}
 
-                  ${escapeHtml(
-                    video.title ||
-                    "Không có tiêu đề"
-                  )}
+      <br>
 
-                </div>
 
+      <span class="info-label">
+        ⏱️ Thời lượng:
+      </span>
 
-                <div class="video-info">
+      ${formatDuration(
+        video.duration
+      )}
 
-                  <span class="info-label">
-                    👤 Kênh:
-                  </span>
+      <br>
 
-                  ${escapeHtml(
-                    video.channel ||
-                    "Không có thông tin"
-                  )}
 
-                  <br>
+      <span class="info-label">
+        🌐 Nền tảng:
+      </span>
 
+      ${escapeHtml(
+        data.platform ||
+        "Không xác định"
+      )}
 
-                  <span class="info-label">
-                    ⏱️ Thời lượng:
-                  </span>
+    </div>
 
-                  ${formatDuration(
-                    video.duration
-                  )}
 
-                  <br>
+    <div class="video-url">
 
+      ${escapeHtml(
+        data.url || url
+      )}
 
-                  <span class="info-label">
-                    🌐 Nền tảng:
-                  </span>
+    </div>
 
-                  ${escapeHtml(
-                    data.platform ||
-                    "Không xác định"
-                  )}
 
-                </div>
+    <button
+      class="next-button"
+      onclick="prepareNextStep()"
+    >
+      ⬇️ TIẾP TỤC
+    </button>
 
 
-                <div class="video-url">
+  </div>
 
-                  ${escapeHtml(
-                    data.url || url
-                  )}
+</div>
 
-                </div>
+`;
 
+}
 
-                <button
-                  class="next-button"
-                  onclick="prepareNextStep()"
-                >
-                  ⬇️ TIẾP TỤC
-                </button>
+else {
 
-              </div>
+result.innerHTML = `
 
-            </div>
+<div class="status success">
 
-          `;
+  ✅ Backend đã xử lý liên kết!
 
-        }
+</div>
 
 
-        /*
-          Không có metadata video
-          Ví dụ TikTok hiện tại
-        */
+<div class="video-card">
 
-        else {
+  <div class="video-content">
 
-          result.innerHTML = `
+    <div class="video-title">
 
-            <div class="status success">
+      🎵 ${escapeHtml(
+        data.platform ||
+        "Video"
+      )}
 
-              ✅ Backend đã xử lý liên kết!
+    </div>
 
-            </div>
 
+    <div class="video-info">
 
-            <div class="video-card">
+      ${escapeHtml(
+        data.message ||
+        "Đã nhận diện liên kết."
+      )}
 
-              <div class="video-content">
+    </div>
 
-                <div class="video-title">
 
-                  ${getPlatformIcon(
-                    data.platform
-                  )}
+    <div class="video-url">
 
-                  ${escapeHtml(
-                    data.platform ||
-                    "Video"
-                  )}
+      ${escapeHtml(
+        data.url || url
+      )}
 
-                </div>
+    </div>
 
 
-                <div class="video-info">
+    <button
+      class="next-button"
+      onclick="prepareNextStep()"
+    >
+      ⬇️ TIẾP TỤC
+    </button>
 
-                  ${escapeHtml(
-                    data.message ||
-                    "Đã nhận diện liên kết."
-                  )}
+  </div>
 
-                </div>
+</div>
 
+`;
 
-                <div class="video-url">
-
-                  ${escapeHtml(
-                    data.url || url
-                  )}
-
-                </div>
-
-
-                <button
-                  class="next-button"
-                  onclick="prepareNextStep()"
-                >
-                  ⬇️ TIẾP TỤC
-                </button>
-
-              </div>
-
-            </div>
-
-          `;
-
-        }
-
-
-      } catch (error) {
-
-        console.error(error);
-
-
-        result.innerHTML =
-
-          '<div class="status error">' +
-
-          '❌ Không lấy được thông tin video.' +
-
-          '<br><br>' +
-
-          '<span>' +
-
-          escapeHtml(
-            error.message
-          ) +
-
-          '</span>' +
-
-          '</div>';
-
-      }
-
-
-      finally {
-
-        button.disabled = false;
-
-        button.innerText =
-          "🔍 PHÂN TÍCH VIDEO";
-
-      }
-
-    }
-
-
-    /*
-      Biểu tượng nền tảng
-    */
-
-    function getPlatformIcon(platform) {
-
-      const name =
-        String(platform || "")
-          .toLowerCase();
-
-
-      if (name.includes("youtube")) {
-        return "▶️";
-      }
-
-      if (name.includes("tiktok")) {
-        return "🎵";
-      }
-
-      if (name.includes("facebook")) {
-        return "📘";
-      }
-
-      if (name.includes("douyin")) {
-        return "🎵";
-      }
-
-      return "🎬";
-
-    }
-
-
-    /*
-      Nút TIẾP TỤC
-    */
-
-    function prepareNextStep() {
-
-      alert(
-        "Thông tin video đã sẵn sàng. Chức năng tiếp theo sẽ được xây dựng ở bước sau."
-      );
-
-    }
-
-
-    /*
-      Bảo vệ nội dung HTML
-    */
-
-    function escapeHtml(value) {
-
-      return String(value)
-
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-
-        .replace(
-          /</g,
-          "&lt;"
-        )
-
-        .replace(
-          />/g,
-          "&gt;"
-        )
-
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
-    }
-
-  </script></body></html>
+}
