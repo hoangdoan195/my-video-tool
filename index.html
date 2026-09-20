@@ -11,21 +11,13 @@ content="width=device-width, initial-scale=1.0"
     }
 
     body {
-
       margin: 0;
-
       min-height: 100vh;
-
       padding: 20px;
-
       display: flex;
-
       justify-content: center;
-
       align-items: center;
-
       font-family: Arial, sans-serif;
-
       background:
         radial-gradient(
           circle at top,
@@ -33,372 +25,221 @@ content="width=device-width, initial-scale=1.0"
           #111827 50%,
           #030712
         );
-
       color: white;
-
     }
 
     .app {
-
       width: 100%;
-
       max-width: 560px;
-
       padding: 30px;
-
       border-radius: 24px;
-
       background: rgba(31,41,55,.97);
-
       border: 1px solid rgba(255,255,255,.08);
-
       box-shadow:
         0 20px 60px rgba(0,0,0,.45);
-
     }
 
     .logo {
-
       text-align: center;
-
       font-size: 46px;
-
       margin-bottom: 8px;
-
     }
 
     h1 {
-
       margin: 0;
-
       text-align: center;
-
       font-size: 28px;
-
     }
 
     .subtitle {
-
       text-align: center;
-
       color: #9ca3af;
-
       line-height: 1.5;
-
       margin: 10px 0 25px;
-
     }
 
     label {
-
       display: block;
-
       margin-bottom: 8px;
-
       color: #d1d5db;
-
       font-size: 14px;
-
       font-weight: bold;
-
     }
 
     textarea {
-
       width: 100%;
-
       min-height: 130px;
-
       padding: 16px;
-
       border: 1px solid #4b5563;
-
       border-radius: 14px;
-
       outline: none;
-
       resize: vertical;
-
       background: #111827;
-
       color: white;
-
       font-size: 16px;
-
       font-family: Arial, sans-serif;
-
       line-height: 1.5;
-
     }
 
     textarea:focus {
-
       border-color: #3b82f6;
-
       box-shadow:
         0 0 0 3px rgba(59,130,246,.15);
-
     }
 
     textarea::placeholder {
-
       color: #6b7280;
-
     }
 
     .analyze-button {
-
       width: 100%;
-
       margin-top: 14px;
-
       padding: 16px;
-
       border: none;
-
       border-radius: 14px;
-
       background:
         linear-gradient(
           135deg,
           #2563eb,
           #4f46e5
         );
-
       color: white;
-
       font-size: 16px;
-
       font-weight: bold;
-
       cursor: pointer;
-
       transition: .2s;
-
     }
 
     .analyze-button:hover {
-
       filter: brightness(1.1);
-
     }
 
     .analyze-button:active {
-
       transform: scale(.98);
-
     }
 
     .analyze-button:disabled {
-
       opacity: .6;
-
       cursor: not-allowed;
-
     }
 
     #result {
-
       display: none;
-
       margin-top: 22px;
-
     }
 
     .status {
-
       padding: 12px 14px;
-
       border-radius: 12px;
-
       font-size: 14px;
-
       font-weight: bold;
-
     }
 
     .success {
-
       color: #86efac;
-
       background: rgba(34,197,94,.10);
-
       border: 1px solid rgba(34,197,94,.20);
-
     }
 
     .error {
-
       color: #fca5a5;
-
       background: rgba(239,68,68,.10);
-
       border: 1px solid rgba(239,68,68,.20);
-
     }
 
     .warning {
-
       color: #fcd34d;
-
       background: rgba(245,158,11,.10);
-
       border: 1px solid rgba(245,158,11,.20);
-
     }
 
     .video-card {
-
       margin-top: 14px;
-
       overflow: hidden;
-
       border-radius: 18px;
-
       background: #111827;
-
       border: 1px solid #374151;
-
     }
 
     .thumbnail-wrapper {
-
       position: relative;
-
       width: 100%;
-
       background: #030712;
-
     }
 
     .thumbnail {
-
       width: 100%;
-
       display: block;
-
       aspect-ratio: 16 / 9;
-
       object-fit: cover;
-
     }
 
     .platform-badge {
-
       position: absolute;
-
       left: 12px;
-
       top: 12px;
-
       padding: 7px 10px;
-
       border-radius: 8px;
-
       background: rgba(0,0,0,.75);
-
       backdrop-filter: blur(5px);
-
       font-size: 12px;
-
       font-weight: bold;
-
     }
 
     .video-content {
-
       padding: 18px;
-
     }
 
     .video-title {
-
       font-size: 20px;
-
       font-weight: bold;
-
       line-height: 1.4;
-
       margin-bottom: 14px;
-
     }
 
     .video-info {
-
       color: #d1d5db;
-
       font-size: 14px;
-
       line-height: 2;
-
     }
 
     .info-label {
-
       color: #9ca3af;
-
     }
 
     .video-url {
-
       display: block;
-
       margin-top: 14px;
-
       padding: 10px;
-
       border-radius: 9px;
-
       background: #1f2937;
-
       color: #93c5fd;
-
       font-size: 12px;
-
       word-break: break-all;
-
     }
 
     .next-button {
-
       width: 100%;
-
       margin-top: 16px;
-
       padding: 14px;
-
       border: 1px solid #374151;
-
       border-radius: 12px;
-
       background: #1f2937;
-
       color: white;
-
       font-size: 15px;
-
       font-weight: bold;
-
       cursor: pointer;
-
     }
 
     .next-button:hover {
-
       background: #374151;
-
     }
 
     .footer {
-
       margin-top: 22px;
-
       text-align: center;
-
       color: #6b7280;
-
       font-size: 12px;
-
     }
 
   </style></head><body>  <div class="app"><div class="logo">
@@ -413,17 +254,14 @@ content="width=device-width, initial-scale=1.0"
   Dán liên kết video hoặc nội dung chia sẻ
 </p>
 
-
 <label for="videoUrl">
   Liên kết video
 </label>
-
 
 <textarea
   id="videoUrl"
   placeholder="Dán link YouTube, TikTok, Facebook, Douyin..."
 ></textarea>
-
 
 <button
   id="analyzeButton"
@@ -433,9 +271,7 @@ content="width=device-width, initial-scale=1.0"
   🔍 PHÂN TÍCH VIDEO
 </button>
 
-
 <div id="result"></div>
-
 
 <div class="footer">
   My Video Tool
@@ -470,7 +306,7 @@ content="width=device-width, initial-scale=1.0"
 
 
       /*
-        Hỗ trợ nội dung chia sẻ Douyin
+        Hỗ trợ link Douyin
       */
 
       const douyin =
@@ -493,7 +329,6 @@ content="width=device-width, initial-scale=1.0"
 
     /*
       Đổi thời lượng ISO 8601
-      PT5M32S → 05:32
     */
 
     function formatDuration(duration) {
@@ -521,10 +356,8 @@ content="width=device-width, initial-scale=1.0"
       const hours =
         parseInt(match[1] || 0);
 
-
       const minutes =
         parseInt(match[2] || 0);
-
 
       const seconds =
         parseInt(match[3] || 0);
@@ -535,13 +368,9 @@ content="width=device-width, initial-scale=1.0"
         return (
 
           String(hours).padStart(2, "0") +
-
           ":" +
-
           String(minutes).padStart(2, "0") +
-
           ":" +
-
           String(seconds).padStart(2, "0")
 
         );
@@ -552,9 +381,7 @@ content="width=device-width, initial-scale=1.0"
       return (
 
         String(minutes).padStart(2, "0") +
-
         ":" +
-
         String(seconds).padStart(2, "0")
 
       );
@@ -660,6 +487,11 @@ content="width=device-width, initial-scale=1.0"
         }
 
 
+        /*
+          Có thông tin video
+          Ví dụ YouTube
+        */
+
         if (data.video) {
 
           const video =
@@ -674,7 +506,9 @@ content="width=device-width, initial-scale=1.0"
 
                   <img
                     class="thumbnail"
-                    src="${escapeHtml(video.thumbnail)}"
+                    src="${escapeHtml(
+                      video.thumbnail
+                    )}"
                     alt="Thumbnail video"
                   >
 
@@ -693,7 +527,9 @@ content="width=device-width, initial-scale=1.0"
           result.innerHTML = `
 
             <div class="status success">
+
               ✅ Phân tích thành công!
+
             </div>
 
 
@@ -703,7 +539,6 @@ content="width=device-width, initial-scale=1.0"
 
 
               <div class="video-content">
-
 
                 <div class="video-title">
 
@@ -768,7 +603,6 @@ content="width=device-width, initial-scale=1.0"
                   ⬇️ TIẾP TỤC
                 </button>
 
-
               </div>
 
             </div>
@@ -778,169 +612,45 @@ content="width=device-width, initial-scale=1.0"
         }
 
 
+        /*
+          Không có metadata video
+          Ví dụ TikTok hiện tại
+        */
+
         else {
 
-result.innerHTML = `
+          result.innerHTML = `
 
-<div class="status success">
+            <div class="status success">
 
-  ✅ Backend đã xử lý liên kết!
+              ✅ Backend đã xử lý liên kết!
 
-</div>
-
-<div class="video-card">
-
-  <div class="video-content">
-
-    <div class="video-title">
-
-      🎵 ${escapeHtml(
-        data.platform || "TikTok"
-      )}
-
-    </div>
-
-    <div class="video-info">
-
-      ${escapeHtml(
-        data.message ||
-        "Đã nhận diện liên kết."
-      )}
-
-    </div>
-
-    <div class="video-url">
-
-      ${escapeHtml(
-        data.url || url
-      )}
-
-    </div>
-
-  </div>
-
-</div>
-
-`;
-
-}
-
-            '✅ Backend đã nhận liên kết!' +
-
-            '<br><br>' +
-
-            'Nền tảng: ' +
-
-            '<span class="platform">' +
-
-            escapeHtml(
-              data.platform ||
-              "Không xác định"
-            ) +
-
-            '</span>' +
-
-            '</div>';
-
-        }
+            </div>
 
 
-      }
+            <div class="video-card">
 
+              <div class="video-content">
 
-      catch (error) {
+                <div class="video-title">
 
-        console.error(error);
-
-
-        result.innerHTML =
-
-          '<div class="status error">' +
-
-          '❌ Không lấy được thông tin video.' +
-
-          '<br><br>' +
-
-          '<span class="warning">' +
-
-          escapeHtml(
-            error.message
-          ) +
-
-          '</span>' +
-
-          '</div>';
-
-      }
-
-
-      finally {
-
-        button.disabled = false;
-
-        button.innerText =
-          "🔍 PHÂN TÍCH VIDEO";
-
-      }
-
-    }
-
-
-    /*
-      Nút TIẾP TỤC hiện chỉ là giao diện.
-      Chúng ta sẽ gắn chức năng thật ở bước sau.
-    */
-
-    function prepareNextStep() {
-
-      alert(
-        "Thông tin video đã sẵn sàng. Chức năng tiếp theo sẽ được xây dựng ở bước sau."
-      );
-
-    }
-
-
-    /*
-      Bảo vệ nội dung hiển thị HTML
-    */
-
-    function escapeHtml(value) {
-
-      return String(value)
-
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-
-        .replace(
-          /</g,
-          "&lt;"
-        )
-
-        .replace(
-          />/g,
-          "&gt;"
-        )
-
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
-    }
-
-  </script></body></html>       🌐 Nền tảng:
-                  </span>
+                  ${getPlatformIcon(
+                    data.platform
+                  )}
 
                   ${escapeHtml(
                     data.platform ||
-                    "Không xác định"
+                    "Video"
+                  )}
+
+                </div>
+
+
+                <div class="video-info">
+
+                  ${escapeHtml(
+                    data.message ||
+                    "Đã nhận diện liên kết."
                   )}
 
                 </div>
@@ -962,7 +672,6 @@ result.innerHTML = `
                   ⬇️ TIẾP TỤC
                 </button>
 
-
               </div>
 
             </div>
@@ -972,36 +681,7 @@ result.innerHTML = `
         }
 
 
-        else {
-
-          result.innerHTML =
-
-            '<div class="status success">' +
-
-            '✅ Backend đã nhận liên kết!' +
-
-            '<br><br>' +
-
-            'Nền tảng: ' +
-
-            '<span class="platform">' +
-
-            escapeHtml(
-              data.platform ||
-              "Không xác định"
-            ) +
-
-            '</span>' +
-
-            '</div>';
-
-        }
-
-
-      }
-
-
-      catch (error) {
+      } catch (error) {
 
         console.error(error);
 
@@ -1014,7 +694,7 @@ result.innerHTML = `
 
           '<br><br>' +
 
-          '<span class="warning">' +
+          '<span>' +
 
           escapeHtml(
             error.message
@@ -1040,8 +720,39 @@ result.innerHTML = `
 
 
     /*
-      Nút TIẾP TỤC hiện chỉ là giao diện.
-      Chúng ta sẽ gắn chức năng thật ở bước sau.
+      Biểu tượng nền tảng
+    */
+
+    function getPlatformIcon(platform) {
+
+      const name =
+        String(platform || "")
+          .toLowerCase();
+
+
+      if (name.includes("youtube")) {
+        return "▶️";
+      }
+
+      if (name.includes("tiktok")) {
+        return "🎵";
+      }
+
+      if (name.includes("facebook")) {
+        return "📘";
+      }
+
+      if (name.includes("douyin")) {
+        return "🎵";
+      }
+
+      return "🎬";
+
+    }
+
+
+    /*
+      Nút TIẾP TỤC
     */
 
     function prepareNextStep() {
@@ -1054,7 +765,7 @@ result.innerHTML = `
 
 
     /*
-      Bảo vệ nội dung hiển thị HTML
+      Bảo vệ nội dung HTML
     */
 
     function escapeHtml(value) {
