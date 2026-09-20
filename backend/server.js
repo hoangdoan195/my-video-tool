@@ -9,11 +9,9 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 app.use(cors());
 app.use(express.json());
 
-/*
-
+/* ========================================
 TRANG KIỂM TRA
-
-*/
+======================================== */
 
 app.get("/", (req, res) => {
 res.json({
@@ -22,23 +20,19 @@ message: "My Video Tool backend đang hoạt động!"
 });
 });
 
-/*
-
+/* ========================================
 LOG
-
-*/
+======================================== */
 
 function logStep(message, data = "") {
 console.log("[My Video Tool] ${message}", data);
 }
 
-/*
-
+/* ========================================
 HTTP FETCH
+======================================== */
 
-*/
-
-async function fetchPage(url) {
+async function fetchPage(url, options = {}) {
 
 logStep("🌐 Đang truy cập:", url);
 
@@ -48,6 +42,7 @@ redirect: "follow",
 
 headers: {
   "User-Agent":
+    options.userAgent ||
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140 Safari/537.36",
 
   "Accept-Language":
@@ -57,6 +52,9 @@ headers: {
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 
   "Cache-Control":
+    "no-cache",
+
+  "Pragma":
     "no-cache"
 }
 
@@ -80,11 +78,9 @@ html
 };
 }
 
-/*
-
+/* ========================================
 HTML DECODE
-
-*/
+======================================== */
 
 function decodeHtml(value) {
 
@@ -93,23 +89,20 @@ return "";
 }
 
 return String(value)
-
-.replace(/&amp;/g, "&")
-.replace(/&quot;/g, '"')
-.replace(/&#39;/g, "'")
-.replace(/&#x27;/gi, "'")
-.replace(/&lt;/g, "<")
-.replace(/&gt;/g, ">")
-.replace(/&#x2F;/gi, "/")
-.replace(/&nbsp;/gi, " ");
+.replace(/&/g, "&")
+.replace(/"/g, '"')
+.replace(/'/g, "'")
+.replace(/'/gi, "'")
+.replace(/</g, "<")
+.replace(/>/g, ">")
+.replace(///gi, "/")
+.replace(/ /gi, " ");
 
 }
 
-/*
-
+/* ========================================
 META
-
-*/
+======================================== */
 
 function getMeta(html, property) {
 
@@ -117,8 +110,7 @@ if (!html) {
 return "";
 }
 
-const escaped =
-property.replace(
+const escaped = property.replace(
 /[-/\^$*+?.()|[]{}]/g,
 "\$&"
 );
@@ -164,11 +156,9 @@ if (match && match[1]) {
 return "";
 }
 
-/*
-
-JSON SAFE PARSE
-
-*/
+/* ========================================
+JSON
+======================================== */
 
 function safeJsonParse(value) {
 
@@ -180,40 +170,39 @@ return null;
 
 }
 
-/*
+/* ========================================
+DECODE JSON STRING
+======================================== */
 
-TÌM OBJECT JSON TRONG HTML
+function decodeJsonString(value) {
 
-*/
-
-function extractJsonScript(html, id) {
-
-if (!html) {
-return null;
+if (!value) {
+return "";
 }
 
-const pattern = new RegExp(
-"<script[^>]+id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/script>",
-"i"
+try {
+
+return JSON.parse(
+  `"${value}"`
 );
 
-const match = html.match(pattern);
+} catch {
 
-if (!match || !match[1]) {
-return null;
+return String(value)
+  .replace(/\\"/g, '"')
+  .replace(/\\n/g, "\n")
+  .replace(/\\r/g, "\r")
+  .replace(/\\t/g, "\t")
+  .replace(/\\u002F/gi, "/")
+  .replace(/\\u0026/gi, "&");
+
 }
 
-return safeJsonParse(
-match[1].trim()
-);
-
 }
 
-/*
-
-QUÉT JSON RECURSIVE
-
-*/
+/* ========================================
+TÌM VALUE RECURSIVE
+======================================== */
 
 function findValueDeep(
 object,
@@ -223,7 +212,7 @@ depth = 0
 
 if (
 !object ||
-depth > 12
+depth > 20
 ) {
 return "";
 }
@@ -234,6 +223,11 @@ typeof object !== "object"
 return "";
 }
 
+const wantedKeys =
+keys.map(
+key => key.toLowerCase()
+);
+
 if (Array.isArray(object)) {
 
 for (const item of object) {
@@ -241,7 +235,7 @@ for (const item of object) {
   const found =
     findValueDeep(
       item,
-      keys,
+      wantedKeys,
       depth + 1
     );
 
@@ -255,13 +249,15 @@ return "";
 
 }
 
-for (const key of Object.keys(object)) {
+for (
+const key of Object.keys(object)
+) {
 
 const lowerKey =
   key.toLowerCase();
 
 if (
-  keys.includes(lowerKey)
+  wantedKeys.includes(lowerKey)
 ) {
 
   const value =
@@ -295,7 +291,7 @@ const key of Object.keys(object)
 const found =
   findValueDeep(
     object[key],
-    keys,
+    wantedKeys,
     depth + 1
   );
 
@@ -308,11 +304,9 @@ if (found) {
 return "";
 }
 
-/*
-
-TÌM URL ẢNH TRONG OBJECT
-
-*/
+/* ========================================
+TÌM ẢNH RECURSIVE
+======================================== */
 
 function findImageDeep(
 object,
@@ -321,7 +315,7 @@ depth = 0
 
 if (
 !object ||
-depth > 12
+depth > 20
 ) {
 return "";
 }
@@ -354,29 +348,61 @@ return "";
 
 const preferredKeys = [
 "origincover",
+"origin_cover",
+"origincoverurl",
+"origin_cover_url",
 "dynamiccover",
+"dynamic_cover",
 "cover",
 "coverurl",
 "cover_url",
 "thumbnail",
 "thumbnailurl",
-"thumbnail_url",
-"origincoverurl",
-"origin_cover"
+"thumbnail_url"
 ];
 
 for (
-const key of preferredKeys
+const preferred of preferredKeys
 ) {
 
-if (
-  typeof object[key] === "string" &&
-  /^https?:\/\//i.test(
-    object[key]
-  )
+for (
+  const key of Object.keys(object)
 ) {
 
-  return object[key];
+  if (
+    key.toLowerCase() !==
+    preferred
+  ) {
+    continue;
+  }
+
+  const value =
+    object[key];
+
+  if (
+    typeof value === "string" &&
+    /^https?:\/\//i.test(value)
+  ) {
+
+    return value;
+
+  }
+
+  if (
+    typeof value === "object"
+  ) {
+
+    const nested =
+      findImageDeep(
+        value,
+        depth + 1
+      );
+
+    if (nested) {
+      return nested;
+    }
+
+  }
 
 }
 
@@ -386,16 +412,13 @@ for (
 const key of Object.keys(object)
 ) {
 
-const value = object[key];
+const value =
+  object[key];
 
 if (
   typeof value === "string" &&
   /^https?:\/\//i.test(value) &&
-  (
-    key.toLowerCase().includes("cover") ||
-    key.toLowerCase().includes("image") ||
-    key.toLowerCase().includes("thumb")
-  )
+  /cover|image|thumb/i.test(key)
 ) {
 
   return value;
@@ -423,11 +446,48 @@ if (found) {
 return "";
 }
 
-/*
+/* ========================================
+TÌM JSON TRONG SCRIPT
+======================================== */
 
-DOUYIN ID
+function extractScriptJson(
+html,
+id
+) {
 
-*/
+if (!html) {
+return null;
+}
+
+const pattern = new RegExp(
+"<script[^>]+id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/script>",
+"i"
+);
+
+const match =
+html.match(pattern);
+
+if (
+!match ||
+!match[1]
+) {
+return null;
+}
+
+let content =
+match[1].trim();
+
+try {
+content =
+decodeURIComponent(content);
+} catch {}
+
+return safeJsonParse(content);
+}
+
+/* ========================================
+TÌM VIDEO ID DOUYIN
+======================================== */
 
 function getDouyinVideoId(url) {
 
@@ -453,11 +513,9 @@ return "";
 
 }
 
-/*
-
+/* ========================================
 YOUTUBE
-
-*/
+======================================== */
 
 function getYouTubeVideoId(url) {
 
@@ -527,11 +585,9 @@ return null;
 
 }
 
-/*
-
+/* ========================================
 TIKTOK
-
-*/
+======================================== */
 
 function isTikTokUrl(url) {
 
@@ -656,8 +712,7 @@ logStep(
   JSON.stringify({
     title: data.title,
     author: data.author_name,
-    thumbnail:
-      data.thumbnail_url
+    thumbnail: data.thumbnail_url
   })
 );
 
@@ -690,11 +745,9 @@ return null;
 
 }
 
-/*
-
+/* ========================================
 DOUYIN
-
-*/
+======================================== */
 
 function isDouyinUrl(url) {
 
@@ -774,11 +827,9 @@ return url;
 
 }
 
-/*
-
-DÒ TÌM DỮ LIỆU DOUYIN
-
-*/
+/* ========================================
+DOUYIN PARSER
+======================================== */
 
 function parseDouyinEmbeddedData(html) {
 
@@ -788,19 +839,49 @@ let thumbnail = "";
 let description = "";
 let duration = null;
 
+logStep(
+"🔎 Bắt đầu quét dữ liệu Douyin..."
+);
+
 /*
 
-NEXT_DATA
+* META
+  */
 
-*/
+title =
+getMeta(html, "og:title") ||
+getMeta(html, "twitter:title");
+
+thumbnail =
+getMeta(html, "og:image") ||
+getMeta(html, "twitter:image");
+
+description =
+getMeta(html, "og:description");
+
+channel =
+getMeta(html, "author");
+
+/*
+
+* NEXT_DATA
+  */
 
 const nextData =
-extractJsonScript(
+extractScriptJson(
+html,
+"NEXT_DATA"
+) ||
+extractScriptJson(
 html,
 "NEXT_DATA"
 );
 
 if (nextData) {
+
+logStep(
+  "🔎 Tìm thấy NEXT_DATA"
+);
 
 title =
   title ||
@@ -818,6 +899,7 @@ channel =
   findValueDeep(
     nextData,
     [
+      "nickname",
       "nickname",
       "authorname",
       "author_name",
@@ -841,303 +923,331 @@ description =
     ]
   );
 
+const durationValue =
+  findValueDeep(
+    nextData,
+    [
+      "duration",
+      "duration_ms",
+      "durationms"
+    ]
+  );
+
+if (durationValue) {
+
+  const numeric =
+    Number(durationValue);
+
+  if (
+    Number.isFinite(numeric)
+  ) {
+
+    duration =
+      numeric > 1000
+        ? Math.round(numeric / 1000)
+        : numeric;
+
+  }
+
+}
+
 }
 
 /*
 
-RENDER_DATA
-
-*/
-
-const renderMatch =
-html.match(
-/<script[^>]+id=["']RENDER_DATA["'][^>]>([\s\S]?)</script>/i
-);
-
-if (
-renderMatch &&
-renderMatch[1]
-) {
-
-let encoded =
-  renderMatch[1].trim();
-
-try {
-
-  encoded =
-    decodeURIComponent(
-      encoded
-    );
-
-} catch {}
+* RENDER_DATA
+  */
 
 const renderData =
-  safeJsonParse(
-    encoded
-  );
+extractScriptJson(
+html,
+"RENDER_DATA"
+);
 
 if (renderData) {
 
-  title =
-    title ||
-    findValueDeep(
-      renderData,
-      [
-        "desc",
-        "title",
-        "description"
-      ]
-    );
-
-  channel =
-    channel ||
-    findValueDeep(
-      renderData,
-      [
-        "nickname",
-        "authorname",
-        "author_name",
-        "username"
-      ]
-    );
-
-  thumbnail =
-    thumbnail ||
-    findImageDeep(
-      renderData
-    );
-
-  description =
-    description ||
-    findValueDeep(
-      renderData,
-      [
-        "description",
-        "desc"
-      ]
-    );
-
-}
-
-}
-
-/*
-
-QUÉT JSON SCRIPT KHÁC
-
-*/
-
-if (
-!title ||
-!thumbnail ||
-!channel
-) {
-
-const scripts =
-  html.match(
-    /<script[^>]*>([\s\S]*?)<\/script>/gi
-  ) || [];
-
-for (
-  const script of scripts
-) {
-
-  if (
-    script.length < 100
-  ) {
-    continue;
-  }
-
-  const text =
-    script
-      .replace(
-        /<script[^>]*>/i,
-        ""
-      )
-      .replace(
-        /<\/script>$/i,
-        ""
-      )
-      .trim();
-
-  /*
-    Chỉ thử những script có dấu hiệu
-    video / author / cover.
-  */
-
-  if (
-    !/video|aweme|author|cover|desc/i
-      .test(text)
-  ) {
-    continue;
-  }
-
-  /*
-    title / desc
-  */
-
-  if (!title) {
-
-    const match =
-      text.match(
-        /"(?:desc|title)"\s*:\s*"((?:\\.|[^"\\])*)"/i
-      );
-
-    if (match) {
-
-      title =
-        decodeJsonString(
-          match[1]
-        );
-
-    }
-
-  }
-
-  /*
-    author
-  */
-
-  if (!channel) {
-
-    const match =
-      text.match(
-        /"(?:nickname|author_name|authorName)"\s*:\s*"((?:\\.|[^"\\])*)"/i
-      );
-
-    if (match) {
-
-      channel =
-        decodeJsonString(
-          match[1]
-        );
-
-    }
-
-  }
-
-  /*
-    cover
-  */
-
-  if (!thumbnail) {
-
-    const match =
-      text.match(
-        /"(?:origin_cover|originCover|dynamic_cover|dynamicCover|cover)"\s*:\s*(?:"([^"]+)"|\{[\s\S]{0,500}?"url"\s*:\s*"([^"]+)")/i
-      );
-
-    if (match) {
-
-      thumbnail =
-        decodeJsonString(
-          match[1] ||
-          match[2] ||
-          ""
-        );
-
-    }
-
-  }
-
-  if (
-    title &&
-    channel &&
-    thumbnail
-  ) {
-    break;
-  }
-
-}
-
-}
-
-/*
-
-META FALLBACK
-
-*/
+logStep(
+  "🔎 Tìm thấy RENDER_DATA"
+);
 
 title =
-title ||
-getMeta(
-html,
-"og:title"
-) ||
-getMeta(
-html,
-"twitter:title"
-);
-
-thumbnail =
-thumbnail ||
-getMeta(
-html,
-"og:image"
-) ||
-getMeta(
-html,
-"twitter:image"
-);
-
-description =
-description ||
-getMeta(
-html,
-"og:description"
-);
+  title ||
+  findValueDeep(
+    renderData,
+    [
+      "desc",
+      "title",
+      "description"
+    ]
+  );
 
 channel =
-channel ||
-getMeta(
-html,
-"author"
-);
+  channel ||
+  findValueDeep(
+    renderData,
+    [
+      "nickname",
+      "authorname",
+      "author_name",
+      "username"
+    ]
+  );
 
-/*
+thumbnail =
+  thumbnail ||
+  findImageDeep(
+    renderData
+  );
 
-DURATION
-
-*/
+description =
+  description ||
+  findValueDeep(
+    renderData,
+    [
+      "description",
+      "desc"
+    ]
+  );
 
 const durationValue =
-findValueDeep(
-nextData,
-[
-"duration",
-"durationms",
-"duration_ms"
-]
-);
-
-if (
-durationValue
-) {
-
-const numeric =
-  Number(
-    durationValue
+  findValueDeep(
+    renderData,
+    [
+      "duration",
+      "duration_ms",
+      "durationms"
+    ]
   );
 
 if (
-  Number.isFinite(numeric)
+  !duration &&
+  durationValue
 ) {
 
-  /*
-    Douyin thường lưu duration
-    theo milliseconds hoặc seconds.
+  const numeric =
+    Number(durationValue);
+
+  if (
+    Number.isFinite(numeric)
+  ) {
+
+    duration =
+      numeric > 1000
+        ? Math.round(numeric / 1000)
+        : numeric;
+
+  }
+
+}
+
+}
+
+/*
+
+* QUÉT TOÀN BỘ SCRIPT
   */
 
-  duration =
-    numeric > 1000
-      ? Math.round(
-          numeric / 1000
-        )
-      : numeric;
+const scripts =
+html.match(
+/<script[^>]>[\s\S]?</script>/gi
+) || [];
+
+logStep(
+"🔎 Số lượng script tìm thấy:",
+scripts.length
+);
+
+for (
+const script of scripts
+) {
+
+if (
+  script.length < 100
+) {
+  continue;
+}
+
+const text =
+  script
+    .replace(
+      /<script[^>]*>/i,
+      ""
+    )
+    .replace(
+      /<\/script>\s*$/i,
+      ""
+    )
+    .trim();
+
+/*
+ * Chỉ quét script có dấu hiệu
+ * dữ liệu video.
+ */
+
+if (
+  !/aweme|video|author|cover|desc|duration/i.test(text)
+) {
+  continue;
+}
+
+/*
+ * TITLE
+ */
+
+if (!title) {
+
+  const match =
+    text.match(
+      /"(?:desc|title)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+    );
+
+  if (match) {
+
+    title =
+      decodeJsonString(
+        match[1]
+      );
+
+  }
+
+}
+
+/*
+ * AUTHOR
+ */
+
+if (!channel) {
+
+  const match =
+    text.match(
+      /"(?:nickname|author_name|authorName|unique_id|uniqueId)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+    );
+
+  if (match) {
+
+    channel =
+      decodeJsonString(
+        match[1]
+      );
+
+  }
+
+}
+
+/*
+ * THUMBNAIL
+ */
+
+if (!thumbnail) {
+
+  const match =
+    text.match(
+      /"(?:origin_cover|originCover|dynamic_cover|dynamicCover|cover|cover_url|coverUrl)"\s*:\s*(?:"((?:\\.|[^"\\])*)"|\s*"((?:\\.|[^"\)*)")/i
+    );
+
+  if (match) {
+
+    thumbnail =
+      decodeJsonString(
+        match[1] ||
+        match[2] ||
+        ""
+      );
+
+  }
+
+}
+
+/*
+ * DURATION
+ */
+
+if (!duration) {
+
+  const match =
+    text.match(
+      /"duration(?:_ms|Ms)?"\s*:\s*(\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const numeric =
+      Number(match[1]);
+
+    if (
+      Number.isFinite(numeric)
+    ) {
+
+      duration =
+        numeric > 1000
+          ? Math.round(
+              numeric / 1000
+            )
+          : numeric;
+
+    }
+
+  }
+
+}
+
+if (
+  title &&
+  channel &&
+  thumbnail
+) {
+  break;
+}
+
+}
+
+/*
+
+* TÌM URL ẢNH BẰNG REGEX
+  */
+
+if (!thumbnail) {
+
+const imageMatches =
+  html.match(
+    /https?:\\?\/\\?\/[^"'\\\s<>]+(?:jpg|jpeg|png|webp)[^"'\\\s<>]*/gi
+  ) || [];
+
+for (
+  const imageUrl of imageMatches
+) {
+
+  const clean =
+    imageUrl
+      .replace(/\\u002F/gi, "/")
+      .replace(/\\\//g, "/")
+      .replace(/&amp;/g, "&");
+
+  if (
+    /cover|image|jpeg|jpg|png|webp/i.test(
+      clean
+    )
+  ) {
+
+    thumbnail = clean;
+    break;
+
+  }
 
 }
 
 }
+
+logStep(
+"🎵 Douyin parser kết quả:",
+JSON.stringify({
+title,
+channel,
+thumbnail,
+description,
+duration
+})
+);
 
 return {
 
@@ -1153,28 +1263,10 @@ thumbnail:
 description:
   description || "",
 
-duration
+duration:
+  duration || null
 
 };
-
-}
-
-function decodeJsonString(value) {
-
-try {
-
-return JSON.parse(
-  `"${value}"`
-);
-
-} catch {
-
-return String(value)
-  .replace(/\\"/g, '"')
-  .replace(/\\n/g, "\n")
-  .replace(/\\u002F/gi, "/");
-
-}
 
 }
 
@@ -1229,11 +1321,9 @@ return null;
 
 }
 
-/*
-
+/* ========================================
 FACEBOOK
-
-*/
+======================================== */
 
 function isFacebookUrl(url) {
 
@@ -1268,54 +1358,75 @@ logStep(
   url
 );
 
+/*
+ * Thử Facebook với User-Agent
+ * giống trình duyệt.
+ */
+
 const {
   response,
   html
 } =
   await fetchPage(url);
 
-/*
-  Facebook /share/r/... có thể trả 400
-  khi không có session/cookie phù hợp.
-
-  Vẫn thử đọc HTML nếu Facebook
-  trả về nội dung.
-*/
-
 const title =
-  getMeta(
-    html,
-    "og:title"
-  );
+  getMeta(html, "og:title") ||
+  getMeta(html, "twitter:title");
 
 const description =
-  getMeta(
-    html,
-    "og:description"
-  );
+  getMeta(html, "og:description") ||
+  getMeta(html, "description");
 
 const thumbnail =
-  getMeta(
-    html,
-    "og:image"
-  ) ||
-  getMeta(
-    html,
-    "twitter:image"
-  );
+  getMeta(html, "og:image") ||
+  getMeta(html, "og:image:url") ||
+  getMeta(html, "twitter:image");
+
+/*
+ * Một số Facebook page có
+ * video image trong HTML.
+ */
+
+let finalThumbnail =
+  thumbnail;
+
+if (!finalThumbnail) {
+
+  const imageMatch =
+    html.match(
+      /https?:\\?\/\\?\/[^"'\\\s<>]+\.(?:jpg|jpeg|png|webp)[^"'\\\s<>]*/i
+    );
+
+  if (imageMatch) {
+
+    finalThumbnail =
+      imageMatch[0]
+        .replace(/\\\//g, "/")
+        .replace(/&amp;/g, "&");
+
+  }
+
+}
 
 logStep(
   "📘 Facebook metadata:",
   JSON.stringify({
     httpStatus: response.status,
     title,
-    thumbnail
+    thumbnail: finalThumbnail
   })
 );
 
+/*
+ * Quan trọng:
+ * Không trả null chỉ vì HTTP 400.
+ * Nếu Facebook trả HTML có metadata
+ * thì vẫn dùng metadata đó.
+ */
+
 if (
   !title &&
-  !thumbnail &&
+  !finalThumbnail &&
   !description
 ) {
 
@@ -1332,7 +1443,7 @@ return {
     "",
 
   thumbnail:
-    thumbnail || "",
+    finalThumbnail || "",
 
   description:
     description || "",
@@ -1355,11 +1466,9 @@ return null;
 
 }
 
-/*
-
+/* ========================================
 API ANALYZE
-
-*/
+======================================== */
 
 app.post(
 "/api/analyze",
@@ -1447,9 +1556,7 @@ if (youtubeVideoId) {
       );
 
     const response =
-      await fetch(
-        apiUrl
-      );
+      await fetch(apiUrl);
 
     const data =
       await response.json();
@@ -1593,9 +1700,7 @@ if (
   );
 
   const resolvedUrl =
-    await resolveTikTokUrl(
-      url
-    );
+    await resolveTikTokUrl(url);
 
   if (!resolvedUrl) {
 
@@ -1679,9 +1784,7 @@ if (
   );
 
   const metadata =
-    await getTikTokMetadata(
-      url
-    );
+    await getTikTokMetadata(url);
 
   return res.json({
 
@@ -1740,9 +1843,7 @@ if (
   );
 
   const resolvedUrl =
-    await resolveDouyinUrl(
-      url
-    );
+    await resolveDouyinUrl(url);
 
   const metadata =
     await getDouyinMetadata(
@@ -1762,6 +1863,11 @@ if (
     video:
       metadata
         ? {
+
+            id:
+              getDouyinVideoId(
+                resolvedUrl
+              ) || null,
 
             title:
               metadata.title ||
@@ -1810,9 +1916,7 @@ if (
   );
 
   const metadata =
-    await getFacebookMetadata(
-      url
-    );
+    await getFacebookMetadata(url);
 
   return res.json({
 
@@ -1844,6 +1948,7 @@ if (
               "",
 
             duration:
+              metadata.duration ||
               null
 
           }
@@ -1881,11 +1986,9 @@ return res.status(400).json({
 }
 );
 
-/*
-
+/* ========================================
 START SERVER
-
-*/
+======================================== */
 
 app.listen(
 PORT,
