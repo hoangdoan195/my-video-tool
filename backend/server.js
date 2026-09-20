@@ -10,7 +10,9 @@ app.use(cors());
 app.use(express.json());
 
 /*
-Trang kiểm tra backend
+
+TRANG KIỂM TRA BACKEND
+
 */
 
 app.get("/", (req, res) => {
@@ -27,7 +29,9 @@ message:
 });
 
 /*
-Lấy YouTube Video ID
+
+YOUTUBE
+
 */
 
 function getYouTubeVideoId(url) {
@@ -58,6 +62,7 @@ if (
 
   const videoId =
     parsed.searchParams.get("v");
+
 
   if (videoId) {
 
@@ -105,7 +110,9 @@ return null;
 }
 
 /*
-Nhận diện TikTok
+
+TIKTOK
+
 */
 
 function isTikTokUrl(url) {
@@ -137,10 +144,6 @@ return false;
 
 }
 
-/*
-Kiểm tra link TikTok rút gọn
-*/
-
 function isTikTokShortUrl(url) {
 
 try {
@@ -170,10 +173,6 @@ return false;
 
 }
 
-/*
-Theo redirect của TikTok
-*/
-
 async function resolveTikTokUrl(url) {
 
 try {
@@ -201,11 +200,6 @@ const response =
   );
 
 
-/*
-  TikTok thường trả URL đích
-  trong Location.
-*/
-
 const location =
   response.headers.get(
     "location"
@@ -218,12 +212,6 @@ if (location) {
 
 }
 
-
-/*
-  Một số trường hợp HEAD
-  không trả Location.
-  Thử GET.
-*/
 
 const getResponse =
   await fetch(
@@ -277,18 +265,154 @@ return null;
 }
 
 /*
-API phân tích video
+
+FACEBOOK
+
+*/
+
+function isFacebookUrl(url) {
+
+try {
+
+const parsed =
+  new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+
+return (
+
+  host === "facebook.com" ||
+
+  host === "fb.watch" ||
+
+  host.endsWith(".facebook.com")
+
+);
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+/*
+
+DOUYIN
+
+*/
+
+function isDouyinUrl(url) {
+
+try {
+
+const parsed =
+  new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+
+return (
+
+  host === "douyin.com" ||
+
+  host.endsWith(".douyin.com")
+
+);
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+function isDouyinShortUrl(url) {
+
+try {
+
+const parsed =
+  new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+
+return (
+
+  host === "v.douyin.com"
+
+);
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+/*
+
+DOUYIN LINK TRONG ĐOẠN TEXT
+
+*/
+
+function extractDouyinUrl(text) {
+
+if (!text) {
+
+return null;
+
+}
+
+const match =
+text.match(
+
+  /https?:\/\/(?:v\.douyin\.com|www\.douyin\.com|douyin\.com|iesdouyin\.com)\/[A-Za-z0-9?=&._~\/%-]+/i
+
+);
+
+if (match) {
+
+return match[0].replace(
+  /[)\]}>，。！？；：]+$/g,
+  ""
+);
+
+}
+
+return null;
+
+}
+
+/*
+
+API PHÂN TÍCH
+
 */
 
 app.post(
 "/api/analyze",
 async (req, res) => {
 
-const url =
-  req.body && req.body.url;
+const originalUrl =
+  req.body &&
+  req.body.url;
 
 
-if (!url) {
+if (!originalUrl) {
 
   return res.status(400).json({
 
@@ -302,10 +426,14 @@ if (!url) {
 }
 
 
+const url =
+  String(originalUrl).trim();
+
+
 /*
-  ====================================
+  ============================
   YOUTUBE
-  ====================================
+  ============================
 */
 
 const youtubeVideoId =
@@ -423,7 +551,8 @@ if (youtubeVideoId) {
       platform:
         "YouTube",
 
-      url: url,
+      url:
+        url,
 
       video: {
 
@@ -485,9 +614,9 @@ if (youtubeVideoId) {
 
 
 /*
-  ====================================
+  ============================
   TIKTOK LINK RÚT GỌN
-  ====================================
+  ============================
 */
 
 if (
@@ -548,9 +677,9 @@ if (
 
 
 /*
-  ====================================
-  TIKTOK URL ĐẦY ĐỦ
-  ====================================
+  ============================
+  TIKTOK ĐẦY ĐỦ
+  ============================
 */
 
 if (
@@ -578,9 +707,70 @@ if (
 
 
 /*
-  ====================================
+  ============================
+  FACEBOOK
+  ============================
+*/
+
+if (
+  isFacebookUrl(url)
+) {
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "Facebook",
+
+    url:
+      url,
+
+    video: null,
+
+    message:
+      "Đã nhận diện liên kết Facebook."
+
+  });
+
+}
+
+
+/*
+  ============================
+  DOUYIN
+  ============================
+*/
+
+if (
+  isDouyinShortUrl(url) ||
+  isDouyinUrl(url)
+) {
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "Douyin",
+
+    url:
+      url,
+
+    video: null,
+
+    message:
+      "Đã nhận diện liên kết Douyin."
+
+  });
+
+}
+
+
+/*
+  ============================
   LINK CHƯA HỖ TRỢ
-  ====================================
+  ============================
 */
 
 return res.status(400).json({
@@ -596,7 +786,9 @@ return res.status(400).json({
 );
 
 /*
-Khởi động server
+
+KHỞI ĐỘNG SERVER
+
 */
 
 app.listen(
