@@ -26,7 +26,7 @@ message: "My Video Tool backend đang hoạt động!"
 
 /*
 
-YOUTUBE
+LẤY YOUTUBE VIDEO ID
 
 */
 
@@ -36,9 +36,10 @@ try {
 
 const parsed = new URL(url);
 
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
 
 if (host === "youtu.be") {
 
@@ -69,14 +70,18 @@ if (
     parts[0] === "shorts" &&
     parts[1]
   ) {
+
     return parts[1];
+
   }
 
   if (
     parts[0] === "live" &&
     parts[1]
   ) {
+
     return parts[1];
+
   }
 
 }
@@ -93,7 +98,7 @@ return null;
 
 /*
 
-TIKTOK
+KIỂM TRA TIKTOK
 
 */
 
@@ -103,9 +108,10 @@ try {
 
 const parsed = new URL(url);
 
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
 
 return (
   host === "tiktok.com" ||
@@ -126,9 +132,10 @@ try {
 
 const parsed = new URL(url);
 
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
 
 return (
   host === "vt.tiktok.com" ||
@@ -145,38 +152,122 @@ return false;
 
 /*
 
-TIKTOK SHORT URL
+KIỂM TRA DOUYIN
 
 */
 
-async function resolveTikTokUrl(url) {
+function isDouyinUrl(url) {
 
 try {
 
-const response = await fetch(
-  url,
-  {
-    method: "GET",
-    redirect: "manual",
-    headers: {
-      "User-Agent": "Mozilla/5.0"
-    }
-  }
+const parsed = new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+return (
+  host === "douyin.com" ||
+  host.endsWith(".douyin.com")
 );
 
-const location =
-  response.headers.get("location");
+} catch (error) {
 
-if (location) {
-  return location;
+return false;
+
 }
 
-return null;
+}
+
+function isDouyinShortUrl(url) {
+
+try {
+
+const parsed = new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+return host === "v.douyin.com";
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+/*
+
+FACEBOOK
+
+*/
+
+function isFacebookUrl(url) {
+
+try {
+
+const parsed = new URL(url);
+
+const host =
+  parsed.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+return (
+  host === "facebook.com" ||
+  host === "fb.watch" ||
+  host.endsWith(".facebook.com")
+);
+
+} catch (error) {
+
+return false;
+
+}
+
+}
+
+/*
+
+RESOLVE LINK RÚT GỌN
+
+*/
+
+async function resolveRedirectUrl(url) {
+
+try {
+
+const response =
+  await fetch(
+    url,
+    {
+      method: "GET",
+      redirect: "follow",
+
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
+
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+        "Accept-Language":
+          "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
+      }
+    }
+  );
+
+return response.url || null;
 
 } catch (error) {
 
 console.error(
-  "TikTok redirect error:",
+  "Redirect resolve error:",
   error.message
 );
 
@@ -212,6 +303,11 @@ const response =
   );
 
 if (!response.ok) {
+
+  console.log(
+    "TikTok oEmbed status:",
+    response.status
+  );
 
   return null;
 
@@ -254,29 +350,141 @@ return null;
 
 /*
 
-FACEBOOK
+LẤY METADATA TỪ HTML
 
 */
 
-function isFacebookUrl(url) {
+async function getHtmlMetadata(url) {
 
 try {
 
-const parsed = new URL(url);
+const response =
+  await fetch(
+    url,
+    {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
 
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
+        "Accept":
+          "text/html,application/xhtml+xml"
+      }
+    }
+  );
 
-return (
-  host === "facebook.com" ||
-  host === "fb.watch" ||
-  host.endsWith(".facebook.com")
-);
+if (!response.ok) {
+
+  console.log(
+    "HTML metadata status:",
+    response.status
+  );
+
+  return null;
+
+}
+
+const html =
+  await response.text();
+
+
+function getMeta(property) {
+
+  const escaped =
+    property.replace(
+      /[-/\\^$*+?.()|[\]{}]/g,
+      "\\$&"
+    );
+
+  const regex =
+    new RegExp(
+      `<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']*)["']`,
+      "i"
+    );
+
+  const match =
+    html.match(regex);
+
+  if (match) {
+    return decodeHtmlEntities(
+      match[1]
+    );
+  }
+
+  return "";
+
+}
+
+
+function getMetaReverse(property) {
+
+  const escaped =
+    property.replace(
+      /[-/\\^$*+?.()|[\]{}]/g,
+      "\\$&"
+    );
+
+  const regex =
+    new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${escaped}["']`,
+      "i"
+    );
+
+  const match =
+    html.match(regex);
+
+  if (match) {
+    return decodeHtmlEntities(
+      match[1]
+    );
+  }
+
+  return "";
+
+}
+
+
+const title =
+  getMeta("og:title") ||
+  getMetaReverse("og:title") ||
+  getMeta("twitter:title") ||
+  getMetaReverse("twitter:title");
+
+
+const thumbnail =
+  getMeta("og:image") ||
+  getMetaReverse("og:image") ||
+  getMeta("twitter:image") ||
+  getMetaReverse("twitter:image");
+
+
+const description =
+  getMeta("og:description") ||
+  getMetaReverse("og:description") ||
+  getMeta("description") ||
+  getMetaReverse("description");
+
+
+return {
+
+  title:
+    title,
+
+  thumbnail:
+    thumbnail,
+
+  description:
+    description
+
+};
 
 } catch (error) {
 
-return false;
+console.error(
+  "HTML metadata error:",
+  error.message
+);
+
+return null;
 
 }
 
@@ -284,80 +492,116 @@ return false;
 
 /*
 
-DOUYIN
+DECODE HTML ENTITY
 
 */
 
-function isDouyinUrl(url) {
+function decodeHtmlEntities(value) {
 
-try {
-
-const parsed = new URL(url);
-
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
-
-return (
-  host === "douyin.com" ||
-  host.endsWith(".douyin.com")
-);
-
-} catch (error) {
-
-return false;
-
+if (!value) {
+return "";
 }
 
-}
-
-function isDouyinShortUrl(url) {
-
-try {
-
-const parsed = new URL(url);
-
-const host = parsed.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
-
-return host === "v.douyin.com";
-
-} catch (error) {
-
-return false;
-
-}
+return String(value)
+.replace(/&/g, "&")
+.replace(/"/g, '"')
+.replace(/'/g, "'")
+.replace(/'/gi, "'")
+.replace(/</g, "<")
+.replace(/>/g, ">");
 
 }
 
 /*
 
-DÒ TÌM LINK DOUYIN TRONG TEXT
+LẤY METADATA TIKTOK / DOUYIN
 
 */
 
-function extractDouyinUrl(text) {
+async function getSocialMetadata(url, platform) {
 
-if (!text) {
-return null;
-}
+let metadata = null;
 
-const match =
-text.match(
-/https?://(?:v.douyin.com|www.douyin.com|douyin.com|iesdouyin.com)/[A-Za-z0-9?=&._~/%-]+/i
-);
+/*
+TikTok:
+thử oEmbed trước
+*/
 
-if (match) {
+if (platform === "TikTok") {
 
-return match[0].replace(
-  /[)\]}>，。！？；：]+$/g,
-  ""
-);
+metadata =
+  await getTikTokMetadata(url);
 
 }
 
+/*
+Nếu không có metadata,
+thử đọc HTML
+*/
+
+if (
+!metadata ||
+!metadata.title ||
+!metadata.thumbnail
+) {
+
+const htmlMetadata =
+  await getHtmlMetadata(url);
+
+
+if (htmlMetadata) {
+
+  metadata = {
+
+    title:
+      metadata?.title ||
+      htmlMetadata.title ||
+      "",
+
+    channel:
+      metadata?.channel ||
+      "",
+
+    thumbnail:
+      metadata?.thumbnail ||
+      htmlMetadata.thumbnail ||
+      "",
+
+    description:
+      metadata?.description ||
+      htmlMetadata.description ||
+      ""
+
+  };
+
+}
+
+}
+
+if (!metadata) {
+
 return null;
+
+}
+
+return {
+
+title:
+  metadata.title || "",
+
+channel:
+  metadata.channel || "",
+
+thumbnail:
+  metadata.thumbnail || "",
+
+description:
+  metadata.description || "",
+
+duration:
+  null
+
+};
 
 }
 
@@ -375,6 +619,7 @@ const originalUrl =
   req.body &&
   req.body.url;
 
+
 if (!originalUrl) {
 
   return res.status(400).json({
@@ -388,18 +633,20 @@ if (!originalUrl) {
 
 }
 
+
 const url =
   String(originalUrl).trim();
 
 
 /*
-=================================
+========================================
 YOUTUBE
-=================================
+========================================
 */
 
 const youtubeVideoId =
   getYouTubeVideoId(url);
+
 
 if (youtubeVideoId) {
 
@@ -416,6 +663,7 @@ if (youtubeVideoId) {
 
   }
 
+
   try {
 
     const apiUrl =
@@ -430,11 +678,14 @@ if (youtubeVideoId) {
         YOUTUBE_API_KEY
       );
 
+
     const response =
       await fetch(apiUrl);
 
+
     const data =
       await response.json();
+
 
     if (!response.ok) {
 
@@ -442,6 +693,7 @@ if (youtubeVideoId) {
         "YouTube API error:",
         data
       );
+
 
       return res.status(502).json({
 
@@ -457,6 +709,7 @@ if (youtubeVideoId) {
       });
 
     }
+
 
     if (
       !data.items ||
@@ -474,17 +727,22 @@ if (youtubeVideoId) {
 
     }
 
+
     const video =
       data.items[0];
+
 
     const snippet =
       video.snippet || {};
 
+
     const contentDetails =
       video.contentDetails || {};
 
+
     const thumbnails =
       snippet.thumbnails || {};
+
 
     const thumbnail =
       thumbnails.maxres?.url ||
@@ -492,6 +750,7 @@ if (youtubeVideoId) {
       thumbnails.medium?.url ||
       thumbnails.default?.url ||
       null;
+
 
     return res.json({
 
@@ -535,12 +794,14 @@ if (youtubeVideoId) {
 
     });
 
+
   } catch (error) {
 
     console.error(
       "YouTube error:",
       error
     );
+
 
     return res.status(500).json({
 
@@ -561,9 +822,9 @@ if (youtubeVideoId) {
 
 
 /*
-=================================
-TIKTOK LINK RÚT GỌN
-=================================
+========================================
+TIKTOK SHORT URL
+========================================
 */
 
 if (
@@ -575,8 +836,10 @@ if (
     url
   );
 
+
   const resolvedUrl =
-    await resolveTikTokUrl(url);
+    await resolveRedirectUrl(url);
+
 
   if (!resolvedUrl) {
 
@@ -599,15 +862,19 @@ if (
 
   }
 
+
   console.log(
     "TikTok resolved URL:",
     resolvedUrl
   );
 
+
   const metadata =
-    await getTikTokMetadata(
-      resolvedUrl
+    await getSocialMetadata(
+      resolvedUrl,
+      "TikTok"
     );
+
 
   return res.json({
 
@@ -621,20 +888,7 @@ if (
 
     video:
       metadata
-        ? {
-            title:
-              metadata.title,
-
-            channel:
-              metadata.channel,
-
-            thumbnail:
-              metadata.thumbnail,
-
-            duration:
-              null
-
-          }
+        ? metadata
         : null,
 
     message:
@@ -648,9 +902,9 @@ if (
 
 
 /*
-=================================
-TIKTOK URL ĐẦY ĐỦ
-=================================
+========================================
+TIKTOK ĐẦY ĐỦ
+========================================
 */
 
 if (
@@ -658,7 +912,11 @@ if (
 ) {
 
   const metadata =
-    await getTikTokMetadata(url);
+    await getSocialMetadata(
+      url,
+      "TikTok"
+    );
+
 
   return res.json({
 
@@ -672,21 +930,7 @@ if (
 
     video:
       metadata
-        ? {
-
-            title:
-              metadata.title,
-
-            channel:
-              metadata.channel,
-
-            thumbnail:
-              metadata.thumbnail,
-
-            duration:
-              null
-
-          }
+        ? metadata
         : null,
 
     message:
@@ -700,9 +944,131 @@ if (
 
 
 /*
-=================================
+========================================
+DOUYIN SHORT URL
+========================================
+*/
+
+if (
+  isDouyinShortUrl(url)
+) {
+
+  console.log(
+    "Douyin short URL:",
+    url
+  );
+
+
+  const resolvedUrl =
+    await resolveRedirectUrl(url);
+
+
+  if (!resolvedUrl) {
+
+    return res.json({
+
+      success: true,
+
+      platform:
+        "Douyin",
+
+      url:
+        url,
+
+      video: null,
+
+      message:
+        "Đã nhận diện Douyin nhưng chưa xác định được URL đích."
+
+    });
+
+  }
+
+
+  console.log(
+    "Douyin resolved URL:",
+    resolvedUrl
+  );
+
+
+  const metadata =
+    await getSocialMetadata(
+      resolvedUrl,
+      "Douyin"
+    );
+
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "Douyin",
+
+    url:
+      resolvedUrl,
+
+    video:
+      metadata
+        ? metadata
+        : null,
+
+    message:
+      metadata
+        ? "Đã lấy thông tin Douyin."
+        : "Đã xác định URL Douyin đích."
+
+  });
+
+}
+
+
+/*
+========================================
+DOUYIN ĐẦY ĐỦ
+========================================
+*/
+
+if (
+  isDouyinUrl(url)
+) {
+
+  const metadata =
+    await getSocialMetadata(
+      url,
+      "Douyin"
+    );
+
+
+  return res.json({
+
+    success: true,
+
+    platform:
+      "Douyin",
+
+    url:
+      url,
+
+    video:
+      metadata
+        ? metadata
+        : null,
+
+    message:
+      metadata
+        ? "Đã lấy thông tin Douyin."
+        : "Đã nhận diện liên kết Douyin."
+
+  });
+
+}
+
+
+/*
+========================================
 FACEBOOK
-=================================
+========================================
 */
 
 if (
@@ -730,66 +1096,10 @@ if (
 
 
 /*
-=================================
-DOUYIN
-=================================
-*/
-
-if (
-  isDouyinShortUrl(url) ||
-  isDouyinUrl(url)
-) {
-
-  return res.json({
-
-    success: true,
-
-    platform:
-      "Douyin",
-
-    url:
-      url,
-
-    video: null,
-
-    message:
-      "Đã nhận diện liên kết Douyin."
-
-  });
-
-}
-
-
-/*
-=================================
+========================================
 LINK KHÔNG HỖ TRỢ
-=================================
+========================================
 */
-
-const douyinFromText =
-  extractDouyinUrl(url);
-
-if (douyinFromText) {
-
-  return res.json({
-
-    success: true,
-
-    platform:
-      "Douyin",
-
-    url:
-      douyinFromText,
-
-    video: null,
-
-    message:
-      "Đã tìm thấy liên kết Douyin trong nội dung chia sẻ."
-
-  });
-
-}
-
 
 return res.status(400).json({
 
@@ -810,11 +1120,8 @@ KHỞI ĐỘNG SERVER
 */
 
 app.listen(
-
 PORT,
-
 "0.0.0.0",
-
 () => {
 
 console.log(
@@ -822,5 +1129,4 @@ console.log(
 );
 
 }
-
 );
