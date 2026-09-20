@@ -2,7 +2,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>My Video Tool</title>  <style>
-
     * {
       box-sizing: border-box;
     }
@@ -15,7 +14,6 @@
       justify-content: center;
       align-items: center;
       font-family: Arial, sans-serif;
-
       background:
         radial-gradient(
           circle at top,
@@ -23,7 +21,6 @@
           #111827 50%,
           #030712
         );
-
       color: white;
     }
 
@@ -32,13 +29,9 @@
       max-width: 560px;
       padding: 30px;
       border-radius: 24px;
-
       background: rgba(31, 41, 55, .97);
-
       border: 1px solid rgba(255, 255, 255, .08);
-
-      box-shadow:
-        0 20px 60px rgba(0, 0, 0, .45);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
     }
 
     .logo {
@@ -72,15 +65,12 @@
       width: 100%;
       min-height: 130px;
       padding: 16px;
-
       border: 1px solid #4b5563;
       border-radius: 14px;
       outline: none;
       resize: vertical;
-
       background: #111827;
       color: white;
-
       font-size: 16px;
       font-family: Arial, sans-serif;
       line-height: 1.5;
@@ -88,9 +78,7 @@
 
     textarea:focus {
       border-color: #3b82f6;
-
-      box-shadow:
-        0 0 0 3px rgba(59, 130, 246, .15);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
     }
 
     textarea::placeholder {
@@ -101,22 +89,13 @@
       width: 100%;
       margin-top: 14px;
       padding: 16px;
-
       border: none;
       border-radius: 14px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #2563eb,
-          #4f46e5
-        );
-
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
       color: white;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-
       transition: .2s;
     }
 
@@ -141,51 +120,34 @@
     .status {
       padding: 12px 14px;
       border-radius: 12px;
-
       font-size: 14px;
       font-weight: bold;
     }
 
     .success {
       color: #86efac;
-
-      background:
-        rgba(34, 197, 94, .10);
-
-      border:
-        1px solid rgba(34, 197, 94, .20);
+      background: rgba(34, 197, 94, .10);
+      border: 1px solid rgba(34, 197, 94, .20);
     }
 
     .error {
       color: #fca5a5;
-
-      background:
-        rgba(239, 68, 68, .10);
-
-      border:
-        1px solid rgba(239, 68, 68, .20);
+      background: rgba(239, 68, 68, .10);
+      border: 1px solid rgba(239, 68, 68, .20);
     }
 
     .warning {
       color: #fcd34d;
-
-      background:
-        rgba(245, 158, 11, .10);
-
-      border:
-        1px solid rgba(245, 158, 11, .20);
+      background: rgba(245, 158, 11, .10);
+      border: 1px solid rgba(245, 158, 11, .20);
     }
 
     .video-card {
       margin-top: 14px;
       overflow: hidden;
-
       border-radius: 18px;
-
       background: #111827;
-
-      border:
-        1px solid #374151;
+      border: 1px solid #374151;
     }
 
     .thumbnail-wrapper {
@@ -197,27 +159,18 @@
     .thumbnail {
       width: 100%;
       display: block;
-
       aspect-ratio: 16 / 9;
-
       object-fit: cover;
     }
 
     .platform-badge {
       position: absolute;
-
       left: 12px;
       top: 12px;
-
       padding: 7px 10px;
-
       border-radius: 8px;
-
-      background:
-        rgba(0, 0, 0, .75);
-
+      background: rgba(0, 0, 0, .75);
       backdrop-filter: blur(5px);
-
       font-size: 12px;
       font-weight: bold;
     }
@@ -245,39 +198,25 @@
 
     .video-url {
       display: block;
-
       margin-top: 14px;
       padding: 10px;
-
       border-radius: 9px;
-
       background: #1f2937;
-
       color: #93c5fd;
-
       font-size: 12px;
-
       word-break: break-all;
     }
 
     .next-button {
       width: 100%;
-
       margin-top: 16px;
       padding: 14px;
-
-      border:
-        1px solid #374151;
-
+      border: 1px solid #374151;
       border-radius: 12px;
-
       background: #1f2937;
-
       color: white;
-
       font-size: 15px;
       font-weight: bold;
-
       cursor: pointer;
     }
 
@@ -287,14 +226,10 @@
 
     .footer {
       margin-top: 22px;
-
       text-align: center;
-
       color: #6b7280;
-
       font-size: 12px;
     }
-
   </style></head><body>  <div class="app"><div class="logo">
   🎬
 </div>
@@ -362,20 +297,87 @@
 
     /*
       Định dạng thời lượng
+
+      Hỗ trợ:
+
+      38
+      "38"
+      PT38S
+      PT1M38S
+      PT1H2M38S
     */
 
     function formatDuration(duration) {
 
-      if (!duration) {
+      if (
+        duration === null ||
+        duration === undefined ||
+        duration === ""
+      ) {
         return "Không có thông tin";
       }
+
+      /*
+        TikTok trả số giây.
+      */
+
+      if (
+        typeof duration === "number" ||
+        /^\d+(?:\.\d+)?$/.test(
+          String(duration).trim()
+        )
+      ) {
+
+        let totalSeconds =
+          Math.round(
+            Number(duration)
+          );
+
+        if (!Number.isFinite(totalSeconds)) {
+          return "Không có thông tin";
+        }
+
+        const hours =
+          Math.floor(totalSeconds / 3600);
+
+        totalSeconds %= 3600;
+
+        const minutes =
+          Math.floor(totalSeconds / 60);
+
+        const seconds =
+          totalSeconds % 60;
+
+        if (hours > 0) {
+
+          return (
+            String(hours).padStart(2, "0") +
+            ":" +
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(seconds).padStart(2, "0")
+          );
+
+        }
+
+        return (
+          String(minutes).padStart(2, "0") +
+          ":" +
+          String(seconds).padStart(2, "0")
+        );
+      }
+
+
+      /*
+        YouTube ISO 8601.
+      */
 
       const value =
         String(duration);
 
       const match =
         value.match(
-          /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
+          /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/i
         );
 
       if (!match) {
@@ -383,13 +385,13 @@
       }
 
       const hours =
-        parseInt(match[1] || 0);
+        parseInt(match[1] || 0, 10);
 
       const minutes =
-        parseInt(match[2] || 0);
+        parseInt(match[2] || 0, 10);
 
       const seconds =
-        parseInt(match[3] || 0);
+        parseInt(match[3] || 0, 10);
 
       if (hours > 0) {
 
@@ -408,7 +410,6 @@
         ":" +
         String(seconds).padStart(2, "0")
       );
-
     }
 
 
@@ -503,6 +504,12 @@
           await response.json();
 
 
+        console.log(
+          "📦 API response:",
+          data
+        );
+
+
         if (
           !response.ok ||
           !data.success
@@ -517,20 +524,59 @@
 
 
         /*
-          Lấy thông tin video.
+          Backend của chúng ta trả:
 
-          Hỗ trợ cả:
+          {
+            success: true,
+            platform: "TikTok",
+            url: "...",
 
-          data.video.thumbnail
-
-          và:
-
-          data.thumbnail
+            video: {
+              title: "...",
+              channel: "...",
+              thumbnail: "...",
+              duration: 38
+            }
+          }
         */
 
         const video =
-          data.video || data;
+          data.video || {};
 
+
+        /*
+          TITLE
+
+          Ưu tiên video.title.
+        */
+
+        const title =
+          String(
+            video.title ||
+            data.title ||
+            ""
+          ).trim() ||
+          "Không có tiêu đề";
+
+
+        /*
+          AUTHOR / CHANNEL
+        */
+
+        const channel =
+          String(
+            video.channel ||
+            video.author ||
+            data.channel ||
+            data.author ||
+            ""
+          ).trim() ||
+          "Không có thông tin";
+
+
+        /*
+          THUMBNAIL
+        */
 
         const thumbnailUrl =
           video.thumbnail ||
@@ -538,30 +584,49 @@
           null;
 
 
-        const title =
-          video.title ||
-          data.title ||
-          "Không có tiêu đề";
-
-
-        const channel =
-          video.channel ||
-          video.author ||
-          data.channel ||
-          data.author ||
-          "Không có thông tin";
-
+        /*
+          DURATION
+        */
 
         const duration =
-          video.duration ||
-          data.duration ||
+          video.duration ??
+          data.duration ??
           null;
 
+
+        /*
+          PLATFORM
+        */
 
         const platform =
           data.platform ||
           video.platform ||
           "Video";
+
+
+        /*
+          In dữ liệu ra console để kiểm tra.
+        */
+
+        console.log(
+          "🎬 TITLE:",
+          title
+        );
+
+        console.log(
+          "👤 AUTHOR:",
+          channel
+        );
+
+        console.log(
+          "🖼️ THUMBNAIL:",
+          thumbnailUrl
+        );
+
+        console.log(
+          "⏱️ DURATION:",
+          duration
+        );
 
 
         /*
@@ -571,7 +636,6 @@
         const thumbnail =
           thumbnailUrl
             ? `
-
               <div class="thumbnail-wrapper">
 
                 <img
@@ -593,21 +657,18 @@
                 </div>
 
               </div>
-
             `
             : "";
 
 
         /*
-          Kết quả
+          Hiển thị kết quả
         */
 
         result.innerHTML = `
 
           <div class="status success">
-
             ✅ Phân tích thành công!
-
           </div>
 
 
@@ -683,7 +744,10 @@
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "❌ Analyze error:",
+          error
+        );
 
 
         result.innerHTML =
@@ -696,11 +760,9 @@
             <br><br>
 
             <span>
-
               ${escapeHtml(
                 error.message
               )}
-
             </span>
 
           </div>
