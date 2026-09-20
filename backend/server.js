@@ -569,709 +569,93 @@ TIKTOK METADATA
 */
 
 async function getTikTokMetadata(url) {
-try {
-logStep(
-"🎵 Gọi TikTok oEmbed:",
-url
-);
+  try {
+    logStep("🎵 Gọi TikTok oEmbed:", url);
 
-/*
-====================================
-OEMBED
-====================================
-*/
+    /*
+    ====================================
+    OEMBED
+    ====================================
+    */
 
-const apiUrl =
-  "https://www.tiktok.com/oembed?url=" +
-  encodeURIComponent(url);
+    const apiUrl =
+      "https://www.tiktok.com/oembed?url=" +
+      encodeURIComponent(url);
 
-const response =
-  await fetch(apiUrl, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+    const response = await fetch(apiUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
 
-      "Accept":
-        "application/json,text/plain,*/*",
+        "Accept":
+          "application/json,text/plain,*/*",
 
-      "Accept-Language":
-        "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
-    }
-  });
-
-logStep(
-  "🎵 TikTok oEmbed HTTP:",
-  response.status
-);
-
-let title = "";
-let channel = "";
-let thumbnail = "";
-let description = "";
-let duration = null;
-
-if (response.ok) {
-  const data = await response.json();
-
-  title =
-    data.title ||
-    "";
-
-  channel =
-    data.author_name ||
-    "";
-
-  thumbnail =
-    data.thumbnail_url ||
-    "";
-
-  logStep(
-    "🎵 TikTok oEmbed metadata:",
-    JSON.stringify({
-      title,
-      author: channel,
-      thumbnail
-    })
-  );
-} else {
-  logStep(
-    "⚠️ TikTok oEmbed không trả về OK:",
-    response.status
-  );
-}
-
-/*
-====================================
-ĐỌC HTML TIKTOK
-====================================
-*/
-
-logStep(
-  "🎵 Đang đọc HTML TikTok để tìm metadata..."
-);
-
-const pageResponse =
-  await fetch(url, {
-    method: "GET",
-    redirect: "follow",
-
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
-
-      "Accept":
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-
-      "Accept-Language":
-        "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-
-      "Cache-Control":
-        "no-cache",
-
-      "Pragma":
-        "no-cache"
-    }
-  });
-
-const html =
-  await pageResponse.text();
-
-logStep(
-  "🎵 TikTok HTML HTTP:",
-  pageResponse.status
-);
-
-logStep(
-  "🎵 TikTok HTML size:",
-  `${html.length} ký tự`
-);
-
-/*
-====================================
-META TAG
-====================================
-*/
-
-if (!title) {
-  title =
-    getMeta(
-      html,
-      "og:title"
-    ) ||
-    getMeta(
-      html,
-      "twitter:title"
-    ) ||
-    getMeta(
-      html,
-      "title"
-    );
-}
-
-if (!description) {
-  description =
-    getMeta(
-      html,
-      "og:description"
-    ) ||
-    getMeta(
-      html,
-      "twitter:description"
-    ) ||
-    "";
-}
-
-if (!thumbnail) {
-  thumbnail =
-    getMeta(
-      html,
-      "og:image"
-    ) ||
-    getMeta(
-      html,
-      "twitter:image"
-    );
-}
-
-if (!channel) {
-  channel =
-    getMeta(
-      html,
-      "author"
-    ) ||
-    "";
-}
-
-/*
-====================================
-JSON-LD
-====================================
-*/
-
-const jsonLdMatches =
-  html.match(
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-  ) || [];
-
-logStep(
-  "🎵 TikTok JSON-LD:",
-  jsonLdMatches.length
-);
-
-for (
-  const script of jsonLdMatches
-) {
-  const jsonText =
-    script
-      .replace(
-        /<script[^>]*>/i,
-        ""
-      )
-      .replace(
-        /<\/script>$/i,
-        ""
-      )
-      .trim();
-
-  const data =
-    safeJsonParse(
-      jsonText
-    );
-
-  if (!data) {
-    continue;
-  }
-
-  if (!title) {
-    title =
-      findValueDeep(
-        data,
-        [
-          "headline",
-          "name",
-          "description",
-          "title"
-        ]
-      );
-  }
-
-  if (!description) {
-    description =
-      findValueDeep(
-        data,
-        [
-          "description"
-        ]
-      );
-  }
-
-  if (!channel) {
-    channel =
-      findValueDeep(
-        data,
-        [
-          "author",
-          "creator",
-          "author_name",
-          "authorName",
-          "name"
-        ]
-      );
-  }
-
-  if (!thumbnail) {
-    thumbnail =
-      findImageDeep(
-        data
-      );
-  }
-
-  const jsonLdDuration =
-    findValueDeep(
-      data,
-      [
-        "duration"
-      ]
-    );
-
-  if (!duration) {
-    duration =
-      normalizeDuration(
-        jsonLdDuration
-      );
-  }
-}
-
-/*
-====================================
-QUÉT SCRIPT JSON
-====================================
-*/
-
-const scripts =
-  html.match(
-    /<script[^>]*>([\s\S]*?)<\/script>/gi
-  ) || [];
-
-logStep(
-  "🎵 TikTok scripts:",
-  scripts.length
-);
-
-for (
-  const script of scripts
-) {
-  if (
-    script.length < 50
-  ) {
-    continue;
-  }
-
-  const text =
-    script
-      .replace(
-        /<script[^>]*>/i,
-        ""
-      )
-      .replace(
-        /<\/script>$/i,
-        ""
-      )
-      .trim();
-
-  /*
-  ================================
-  TITLE
-  ================================
-  */
-
-  if (!title) {
-    const titlePatterns = [
-      /"desc"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"description"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"headline"\s*:\s*"((?:\\.|[^"\\])*)"/i
-    ];
-
-    for (
-      const pattern of titlePatterns
-    ) {
-      const match =
-        text.match(pattern);
-
-      if (
-        match &&
-        match[1]
-      ) {
-        title =
-          decodeJsonString(
-            match[1]
-          );
-
-        if (title) {
-          logStep(
-            "🎵 Tìm thấy TikTok title:",
-            title
-          );
-
-          break;
-        }
+        "Accept-Language":
+          "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
       }
-    }
-  }
-
-  /*
-  ================================
-  DESCRIPTION
-  ================================
-  */
-
-  if (!description) {
-    const match =
-      text.match(
-        /"description"\s*:\s*"((?:\\.|[^"\\])*)"/i
-      );
-
-    if (
-      match &&
-      match[1]
-    ) {
-      description =
-        decodeJsonString(
-          match[1]
-        );
-    }
-  }
-
-  /*
-  ================================
-  AUTHOR
-  ================================
-  */
-
-  if (!channel) {
-    const authorPatterns = [
-      /"nickname"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"author_name"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"authorName"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"unique_id"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"uniqueId"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"username"\s*:\s*"((?:\\.|[^"\\])*)"/i
-    ];
-
-    for (
-      const pattern of authorPatterns
-    ) {
-      const match =
-        text.match(pattern);
-
-      if (
-        match &&
-        match[1]
-      ) {
-        channel =
-          decodeJsonString(
-            match[1]
-          );
-
-        if (channel) {
-          break;
-        }
-      }
-    }
-  }
-
-  /*
-  ================================
-  THUMBNAIL
-  ================================
-  */
-
-  if (!thumbnail) {
-    const imagePatterns = [
-      /"origin_cover"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"originCover"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"dynamic_cover"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"dynamicCover"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"cover"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"cover_url"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"coverUrl"\s*:\s*"((?:\\.|[^"\\])*)"/i,
-
-      /"thumbnail"\s*:\s*"((?:\\.|[^"\\])*)"/i
-    ];
-
-    for (
-      const pattern of imagePatterns
-    ) {
-      const match =
-        text.match(pattern);
-
-      if (
-        match &&
-        match[1]
-      ) {
-        const image =
-          decodeJsonString(
-            match[1]
-          );
-
-        if (
-          /^https?:\/\//i.test(
-            image
-          )
-        ) {
-          thumbnail =
-            image;
-
-          break;
-        }
-      }
-    }
-  }
-
-  /*
-  ================================
-  DURATION
-  ================================
-  */
-
-  if (!duration) {
-    const durationMatch =
-      text.match(
-        /"(?:duration|duration_ms|durationMs|video_duration|videoDuration|playTime|play_time)"\s*:\s*(\d+(?:\.\d+)?)/i
-      );
-
-    if (
-      durationMatch &&
-      durationMatch[1]
-    ) {
-      duration =
-        normalizeDuration(
-          durationMatch[1]
-        );
-
-      if (duration !== null) {
-        logStep(
-          "🎵 Tìm thấy TikTok duration:",
-          `${duration} giây`
-        );
-      }
-    }
-  }
-
-  /*
-  ================================
-  DỪNG KHI ĐỦ DỮ LIỆU
-  ================================
-  */
-
-  if (
-    title &&
-    channel &&
-    thumbnail &&
-    duration
-  ) {
-    break;
-  }
-}
-
-/*
-====================================
-THỬ PARSE JSON TOÀN BỘ HTML
-====================================
-*/
-
-if (
-  !title ||
-  !channel ||
-  !thumbnail ||
-  !duration
-) {
-  const jsonPatterns = [
-    /<script[^>]+id=["']SIGI_STATE["'][^>]*>([\s\S]*?)<\/script>/i,
-
-    /<script[^>]+id=["']__UNIVERSAL_DATA_FOR_REHYDRATION__["'][^>]*>([\s\S]*?)<\/script>/i,
-
-    /<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i
-  ];
-
-  for (
-    const pattern of jsonPatterns
-  ) {
-    const match =
-      html.match(pattern);
-
-    if (
-      !match ||
-      !match[1]
-    ) {
-      continue;
-    }
-
-    const data =
-      safeJsonParse(
-        match[1].trim()
-      );
-
-    if (!data) {
-      continue;
-    }
+    });
 
     logStep(
-      "🎵 Đã tìm thấy TikTok embedded JSON"
+      "🎵 TikTok oEmbed HTTP:",
+      response.status
     );
 
-    if (!title) {
-      title =
-        findValueDeep(
-          data,
-          [
-            "desc",
-            "title",
-            "headline",
-            "description"
-          ]
+    let title = "";
+    let channel = "";
+    let thumbnail = "";
+    let description = "";
+    let duration = null;
+
+    if (response.ok) {
+      try {
+        const data = await response.json();
+
+        title =
+          typeof data.title === "string"
+            ? data.title.trim()
+            : "";
+
+        channel =
+          typeof data.author_name === "string"
+            ? data.author_name.trim()
+            : "";
+
+        thumbnail =
+          typeof data.thumbnail_url === "string"
+            ? data.thumbnail_url.trim()
+            : "";
+
+        description =
+          typeof data.description === "string"
+            ? data.description.trim()
+            : "";
+
+        logStep(
+          "🎵 TikTok oEmbed metadata:",
+          JSON.stringify({
+            title,
+            author: channel,
+            thumbnail,
+            description
+          })
         );
+      } catch (oembedError) {
+        console.error(
+          "⚠️ TikTok oEmbed JSON error:",
+          oembedError.message
+        );
+      }
     }
 
-    if (!channel) {
-      channel =
-        findValueDeep(
-          data,
-          [
-            "nickname",
-            "author_name",
-            "authorName",
-            "username",
-            "unique_id",
-            "uniqueId"
-          ]
-        );
-    }
-
-    if (!thumbnail) {
-      thumbnail =
-        findImageDeep(
-          data
-        );
-    }
-
-    if (!description) {
-      description =
-        findValueDeep(
-          data,
-          [
-            "description",
-            "desc"
-          ]
-        );
-    }
-
-    if (!duration) {
-      duration =
-        normalizeDuration(
-          findValueDeep(
-            data,
-            [
-              "duration",
-              "duration_ms",
-              "durationMs"
-            ]
-          )
-        );
-    }
-  }
-}
-
-/*
-====================================
-TITLE CUỐI CÙNG
-====================================
-*/
-
-if (!title) {
-  const pageTitleMatch =
-    html.match(
-      /<title[^>]*>([\s\S]*?)<\/title>/i
-    );
-
-  if (
-    pageTitleMatch &&
-    pageTitleMatch[1]
-  ) {
-    title =
-      decodeHtml(
-        pageTitleMatch[1]
-      );
-  }
-}
-
-/*
-====================================
-KẾT QUẢ
-====================================
-*/
-
-logStep(
-  "🎵 TikTok metadata cuối:",
-  JSON.stringify({
-    title,
-    author: channel,
-    thumbnail,
-    description,
-    duration
-  })
-);
-
-return {
-  title:
-    title || "",
-
-  channel:
-    channel || "",
-
-  thumbnail:
-    thumbnail || "",
-
-  description:
-    description || "",
-
-  duration:
-    duration
-};
-
-} catch (error) {
-console.error(
-"❌ TikTok metadata error:",
-error.message
-);
-
-return null;
-
-}
-}
-    ==================================
+    /*
+    ====================================
     LẤY HTML TRANG TIKTOK
-    ==================================
+    ====================================
     */
 
     try {
       logStep(
-        "🎵 Đang đọc HTML TikTok để tìm duration..."
+        "🎵 Đang đọc HTML TikTok để tìm metadata..."
       );
 
       const pageResponse = await fetch(url, {
@@ -1288,8 +672,11 @@ return null;
           "Accept-Language":
             "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
 
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
+          "Cache-Control":
+            "no-cache",
+
+          "Pragma":
+            "no-cache"
         }
       });
 
@@ -1305,69 +692,323 @@ return null;
         `${html.length} ký tự`
       );
 
-      const durationPatterns = [
-        /"duration"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"duration_ms"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"durationMs"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"video_duration"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"videoDuration"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"playTime"\s*:\s*(\d+(?:\.\d+)?)/i,
-        /"play_time"\s*:\s*(\d+(?:\.\d+)?)/i
-      ];
+      /*
+      ====================================
+      META TAG
+      ====================================
+      */
 
-      for (const pattern of durationPatterns) {
-        const match = html.match(pattern);
+      if (!title) {
+        title =
+          getMeta(html, "og:title") ||
+          getMeta(html, "twitter:title") ||
+          getMeta(html, "title") ||
+          "";
+      }
 
-        if (match && match[1]) {
-          duration = normalizeDuration(match[1]);
+      if (!description) {
+        description =
+          getMeta(html, "og:description") ||
+          getMeta(html, "twitter:description") ||
+          "";
+      }
 
-          if (duration !== null) {
-            logStep(
-              "🎵 Tìm thấy TikTok duration:",
-              `${duration} giây`
+      if (!thumbnail) {
+        thumbnail =
+          getMeta(html, "og:image") ||
+          getMeta(html, "twitter:image") ||
+          "";
+      }
+
+      if (!channel) {
+        channel =
+          getMeta(html, "author") ||
+          "";
+      }
+
+      /*
+      ====================================
+      JSON-LD
+      ====================================
+      */
+
+      const jsonLdMatches =
+        html.match(
+          /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+        ) || [];
+
+      for (const script of jsonLdMatches) {
+        const jsonText =
+          script
+            .replace(
+              /<script[^>]*>/i,
+              ""
+            )
+            .replace(
+              /<\/script>$/i,
+              ""
+            )
+            .trim();
+
+        const jsonData =
+          safeJsonParse(jsonText);
+
+        if (!jsonData) {
+          continue;
+        }
+
+        if (!title) {
+          title =
+            findValueDeep(
+              jsonData,
+              [
+                "headline",
+                "name",
+                "title",
+                "description"
+              ]
+            ) || "";
+        }
+
+        if (!description) {
+          description =
+            findValueDeep(
+              jsonData,
+              [
+                "description"
+              ]
+            ) || "";
+        }
+
+        if (!channel) {
+          channel =
+            findValueDeep(
+              jsonData,
+              [
+                "author",
+                "creator",
+                "author_name",
+                "authorName",
+                "nickname",
+                "username"
+              ]
+            ) || "";
+        }
+
+        if (!thumbnail) {
+          thumbnail =
+            findImageDeep(jsonData) || "";
+        }
+
+        if (!duration) {
+          const jsonDuration =
+            findValueDeep(
+              jsonData,
+              [
+                "duration",
+                "duration_ms",
+                "durationMs"
+              ]
             );
 
-            break;
+          duration =
+            normalizeDuration(
+              jsonDuration
+            );
+        }
+      }
+
+      /*
+      ====================================
+      TÌM TITLE TRONG HTML / JSON
+      ====================================
+      */
+
+      if (!title) {
+        const titlePatterns = [
+
+          /"desc"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"description"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"shareTitle"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"share_title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /<title[^>]*>([\s\S]*?)<\/title>/i
+        ];
+
+        for (
+          const pattern of titlePatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            const candidate =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (
+              candidate &&
+              candidate.length > 1 &&
+              !candidate
+                .toLowerCase()
+                .includes("tiktok")
+            ) {
+              title = candidate;
+              break;
+            }
           }
         }
       }
 
       /*
-      ==================================
-      QUÉT SCRIPT
-      ==================================
+      ====================================
+      TÌM AUTHOR
+      ====================================
+      */
+
+      if (!channel) {
+        const authorPatterns = [
+
+          /"nickname"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"author_name"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"authorName"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"unique_id"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"uniqueId"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"username"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        ];
+
+        for (
+          const pattern of authorPatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            channel =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (channel) {
+              break;
+            }
+          }
+        }
+      }
+
+      /*
+      ====================================
+      TÌM THUMBNAIL
+      ====================================
+      */
+
+      if (!thumbnail) {
+        const imagePatterns = [
+
+          /"originCover"\s*:\s*"([^"]+)"/i,
+
+          /"origin_cover"\s*:\s*"([^"]+)"/i,
+
+          /"dynamicCover"\s*:\s*"([^"]+)"/i,
+
+          /"dynamic_cover"\s*:\s*"([^"]+)"/i,
+
+          /"cover"\s*:\s*"([^"]+)"/i,
+
+          /"coverUrl"\s*:\s*"([^"]+)"/i,
+
+          /"cover_url"\s*:\s*"([^"]+)"/i
+        ];
+
+        for (
+          const pattern of imagePatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            thumbnail =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (
+              /^https?:\/\//i.test(
+                thumbnail
+              )
+            ) {
+              break;
+            }
+
+            thumbnail = "";
+          }
+        }
+      }
+
+      /*
+      ====================================
+      DURATION
+      ====================================
       */
 
       if (duration === null) {
-        const scripts =
-          html.match(
-            /<script[^>]*>([\s\S]*?)<\/script>/gi
-          ) || [];
+        const durationPatterns = [
 
-        logStep(
-          "🎵 TikTok scripts:",
-          scripts.length
-        );
+          /"duration"\s*:\s*(\d+(?:\.\d+)?)/i,
 
-        for (const script of scripts) {
+          /"duration_ms"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"durationMs"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"video_duration"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"videoDuration"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"playTime"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"play_time"\s*:\s*(\d+(?:\.\d+)?)/i
+        ];
+
+        for (
+          const pattern of durationPatterns
+        ) {
+          const match =
+            html.match(pattern);
+
           if (
-            !/duration|videoDuration|video_duration/i.test(
-              script
-            )
+            match &&
+            match[1]
           ) {
-            continue;
-          }
+            duration =
+              normalizeDuration(
+                match[1]
+              );
 
-          const match = script.match(
-            /"(?:duration|duration_ms|durationMs|video_duration|videoDuration|playTime|play_time)"\s*:\s*(\d+(?:\.\d+)?)/i
-          );
-
-          if (match && match[1]) {
-            duration = normalizeDuration(match[1]);
-
-            if (duration !== null) {
+            if (
+              duration !== null
+            ) {
               logStep(
-                "🎵 Tìm thấy duration trong script:",
+                "🎵 Tìm thấy TikTok duration:",
                 `${duration} giây`
               );
 
@@ -1378,38 +1019,166 @@ return null;
       }
 
       /*
-      ==================================
-      TITLE FALLBACK
-      ==================================
+      ====================================
+      QUÉT SCRIPT CUỐI CÙNG
+      ====================================
       */
 
-      if (!title) {
+      if (
+        !title ||
+        !channel ||
+        !thumbnail ||
+        duration === null
+      ) {
+        const scripts =
+          html.match(
+            /<script[^>]*>([\s\S]*?)<\/script>/gi
+          ) || [];
+
+        logStep(
+          "🎵 TikTok scripts:",
+          scripts.length
+        );
+
+        for (
+          const script of scripts
+        ) {
+          if (
+            script.length < 100
+          ) {
+            continue;
+          }
+
+          const text =
+            script
+              .replace(
+                /<script[^>]*>/i,
+                ""
+              )
+              .replace(
+                /<\/script>$/i,
+                ""
+              );
+
+          /*
+          TITLE
+          */
+
+          if (!title) {
+            const match =
+              text.match(
+                /"(?:desc|title|description|shareTitle|share_title)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              title =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+            }
+          }
+
+          /*
+          AUTHOR
+          */
+
+          if (!channel) {
+            const match =
+              text.match(
+                /"(?:nickname|author_name|authorName|username|unique_id|uniqueId)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              channel =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+            }
+          }
+
+          /*
+          THUMBNAIL
+          */
+
+          if (!thumbnail) {
+            const match =
+              text.match(
+                /"(?:originCover|origin_cover|dynamicCover|dynamic_cover|cover|coverUrl|cover_url)"\s*:\s*"([^"]+)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              const image =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+
+              if (
+                /^https?:\/\//i.test(
+                  image
+                )
+              ) {
+                thumbnail = image;
+              }
+            }
+          }
+
+          /*
+          DURATION
+          */
+
+          if (duration === null) {
+            const match =
+              text.match(
+                /"(?:duration|duration_ms|durationMs|video_duration|videoDuration|playTime|play_time)"\s*:\s*(\d+(?:\.\d+)?)/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              duration =
+                normalizeDuration(
+                  match[1]
+                );
+            }
+          }
+
+          if (
+            title &&
+            channel &&
+            thumbnail &&
+            duration !== null
+          ) {
+            break;
+          }
+        }
+      }
+
+      /*
+      ====================================
+      LOẠI BỎ TITLE KHÔNG HỮU ÍCH
+      ====================================
+      */
+
+      if (title) {
         title =
-          getMeta(html, "og:title") ||
-          getMeta(html, "twitter:title");
+          title
+            .replace(
+              /^\s*TikTok\s*[-|:]\s*/i,
+              ""
+            )
+            .trim();
       }
 
-      /*
-      ==================================
-      THUMBNAIL FALLBACK
-      ==================================
-      */
-
-      if (!thumbnail) {
-        thumbnail =
-          getMeta(html, "og:image") ||
-          getMeta(html, "twitter:image");
-      }
-
-      /*
-      ==================================
-      AUTHOR FALLBACK
-      ==================================
-      */
-
-      if (!channel) {
-        channel = getMeta(html, "author");
-      }
     } catch (pageError) {
       console.error(
         "⚠️ TikTok HTML error:",
@@ -1417,78 +1186,49 @@ return null;
       );
     }
 
+    /*
+    ====================================
+    KẾT QUẢ
+    ====================================
+    */
+
     logStep(
       "🎵 TikTok metadata cuối:",
       JSON.stringify({
         title,
         author: channel,
         thumbnail,
+        description,
         duration
       })
     );
 
     return {
-      title: title || "",
-      channel: channel || "",
-      thumbnail: thumbnail || "",
-      duration
+      title:
+        title || "",
+
+      channel:
+        channel || "",
+
+      thumbnail:
+        thumbnail || "",
+
+      description:
+        description || "",
+
+      duration:
+        duration !== null
+          ? duration
+          : null
     };
+
   } catch (error) {
     console.error(
-      "❌ TikTok oEmbed error:",
+      "❌ TikTok metadata error:",
       error.message
     );
 
     return null;
-  }
-}
-
-/*
-====================================
-DOUYIN
-====================================
-*/
-
-function isDouyinUrl(url) {
-  try {
-    const host = new URL(url)
-      .hostname
-      .toLowerCase()
-      .replace(/^www\./, "");
-
-    return (
-      host === "douyin.com" ||
-      host.endsWith(".douyin.com")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isDouyinShortUrl(url) {
-  try {
-    const host = new URL(url)
-      .hostname
-      .toLowerCase()
-      .replace(/^www\./, "");
-
-    return host === "v.douyin.com";
-  } catch {
-    return false;
-  }
-}
-
-function getDouyinVideoId(url) {
-  try {
-    const parsed = new URL(url);
-
-    const match = parsed.pathname.match(
-      /\/video\/(\d+)/
-    );
-
-    return match ? match[1] : "";
-  } catch {
-    return "";
   }
 }
 
