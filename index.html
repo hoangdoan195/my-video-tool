@@ -30,7 +30,7 @@
 
     .app {
       width: 100%;
-      max-width: 560px;
+      max-width: 600px;
 
       padding: 30px;
 
@@ -66,7 +66,8 @@
 
       line-height: 1.5;
 
-      margin: 10px 0 25px;
+      margin:
+        10px 0 25px;
     }
 
     label {
@@ -77,6 +78,7 @@
       color: #d1d5db;
 
       font-size: 14px;
+
       font-weight: bold;
     }
 
@@ -111,15 +113,12 @@
       border-color: #3b82f6;
 
       box-shadow:
-        0 0 0 3px rgba(59, 130, 246, .15);
+        0 0 0 3px
+        rgba(59, 130, 246, .15);
     }
 
     textarea::placeholder {
       color: #6b7280;
-    }
-
-    button {
-      font-family: Arial, sans-serif;
     }
 
     .analyze-button {
@@ -161,6 +160,7 @@
 
     .analyze-button:disabled {
       opacity: .6;
+
       cursor: not-allowed;
     }
 
@@ -187,7 +187,8 @@
         rgba(34, 197, 94, .10);
 
       border:
-        1px solid rgba(34, 197, 94, .20);
+        1px solid
+        rgba(34, 197, 94, .20);
     }
 
     .error {
@@ -197,7 +198,8 @@
         rgba(239, 68, 68, .10);
 
       border:
-        1px solid rgba(239, 68, 68, .20);
+        1px solid
+        rgba(239, 68, 68, .20);
     }
 
     .warning {
@@ -207,7 +209,8 @@
         rgba(245, 158, 11, .10);
 
       border:
-        1px solid rgba(245, 158, 11, .20);
+        1px solid
+        rgba(245, 158, 11, .20);
     }
 
     .video-card {
@@ -247,7 +250,8 @@
       left: 12px;
       top: 12px;
 
-      padding: 7px 10px;
+      padding:
+        7px 10px;
 
       border-radius: 8px;
 
@@ -314,7 +318,7 @@
     .download-section {
       margin-top: 20px;
 
-      padding-top: 18px;
+      padding-top: 20px;
 
       border-top:
         1px solid #374151;
@@ -328,16 +332,6 @@
       font-weight: bold;
     }
 
-    .download-subtitle {
-      margin-bottom: 14px;
-
-      color: #9ca3af;
-
-      font-size: 13px;
-
-      line-height: 1.5;
-    }
-
     .format-list {
       display: flex;
 
@@ -348,31 +342,19 @@
 
     .format-option {
       position: relative;
-    }
 
-    .format-option input {
-      position: absolute;
-
-      opacity: 0;
-
-      pointer-events: none;
-    }
-
-    .format-label {
       display: flex;
 
       align-items: center;
 
       gap: 12px;
 
-      width: 100%;
-
-      padding: 13px;
+      padding: 14px;
 
       border:
         1px solid #374151;
 
-      border-radius: 12px;
+      border-radius: 14px;
 
       background: #1f2937;
 
@@ -381,58 +363,33 @@
       transition: .2s;
     }
 
-    .format-label:hover {
-      background: #273449;
-
+    .format-option:hover {
       border-color: #4b5563;
+
+      background: #273449;
     }
 
-    .format-option input:checked + .format-label {
+    .format-option.selected {
       border-color: #3b82f6;
 
       background:
-        rgba(37, 99, 235, .15);
+        rgba(37, 99, 235, .12);
 
       box-shadow:
-        0 0 0 1px rgba(59, 130, 246, .25);
+        0 0 0 1px
+        rgba(59, 130, 246, .2);
     }
 
     .format-radio {
       width: 20px;
+
       height: 20px;
 
+      margin: 0;
+
+      accent-color: #3b82f6;
+
       flex-shrink: 0;
-
-      border:
-        2px solid #6b7280;
-
-      border-radius: 50%;
-
-      position: relative;
-    }
-
-    .format-option input:checked + .format-label .format-radio {
-      border-color: #60a5fa;
-    }
-
-    .format-option input:checked + .format-label .format-radio::after {
-      content: "";
-
-      position: absolute;
-
-      width: 10px;
-      height: 10px;
-
-      left: 3px;
-      top: 3px;
-
-      border-radius: 50%;
-
-      background: #60a5fa;
-    }
-
-    .format-icon {
-      font-size: 22px;
     }
 
     .format-main {
@@ -445,10 +402,12 @@
       font-size: 15px;
 
       font-weight: bold;
+
+      color: white;
     }
 
-    .format-detail {
-      margin-top: 3px;
+    .format-details {
+      margin-top: 4px;
 
       color: #9ca3af;
 
@@ -456,7 +415,8 @@
     }
 
     .format-badge {
-      padding: 5px 8px;
+      padding:
+        5px 8px;
 
       border-radius: 7px;
 
@@ -499,7 +459,7 @@
     }
 
     .download-button:hover {
-      filter: brightness(1.08);
+      filter: brightness(1.1);
     }
 
     .download-button:active {
@@ -512,45 +472,16 @@
       cursor: not-allowed;
     }
 
-    .formats-loading {
-      padding: 14px;
+    .download-note {
+      margin-top: 9px;
 
-      border-radius: 12px;
+      color: #6b7280;
 
-      background: #1f2937;
+      font-size: 12px;
 
-      color: #9ca3af;
-
-      font-size: 13px;
+      line-height: 1.5;
 
       text-align: center;
-    }
-
-    .next-button {
-      width: 100%;
-
-      margin-top: 16px;
-
-      padding: 14px;
-
-      border:
-        1px solid #374151;
-
-      border-radius: 12px;
-
-      background: #1f2937;
-
-      color: white;
-
-      font-size: 15px;
-
-      font-weight: bold;
-
-      cursor: pointer;
-    }
-
-    .next-button:hover {
-      background: #374151;
     }
 
     .footer {
@@ -563,14 +494,15 @@
       font-size: 12px;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
 
       body {
         padding: 12px;
       }
 
       .app {
-        padding: 20px;
+        padding: 22px 16px;
+
         border-radius: 20px;
       }
 
@@ -585,7 +517,6 @@
       .video-title {
         font-size: 18px;
       }
-
     }
   </style></head><body>  <div class="app"><div class="logo">
   🎬
@@ -596,7 +527,7 @@
 </h1>
 
 <p class="subtitle">
-  Dán liên kết video hoặc nội dung chia sẻ
+  Dán liên kết video để phân tích và chọn định dạng tải xuống
 </p>
 
 <label for="videoUrl">
@@ -676,88 +607,87 @@
       const value =
         String(duration);
 
+
+      /*
+      YouTube ISO 8601
+      */
+
       const match =
         value.match(
           /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/i
         );
 
-      if (!match) {
+      if (match) {
 
-        const numeric =
-          Number(duration);
+        const hours =
+          parseInt(match[1] || 0);
 
-        if (
-          Number.isFinite(numeric)
-        ) {
+        const minutes =
+          parseInt(match[2] || 0);
 
-          const total =
-            Math.round(numeric);
+        const seconds =
+          parseInt(match[3] || 0);
 
-          const hours =
-            Math.floor(total / 3600);
 
-          const minutes =
-            Math.floor(
-              (total % 3600) / 60
-            );
-
-          const seconds =
-            total % 60;
-
-          if (hours > 0) {
-
-            return (
-              String(hours).padStart(2, "0") +
-              ":" +
-              String(minutes).padStart(2, "0") +
-              ":" +
-              String(seconds).padStart(2, "0")
-            );
-
-          }
+        if (hours > 0) {
 
           return (
+            String(hours).padStart(2, "0") +
+            ":" +
             String(minutes).padStart(2, "0") +
             ":" +
             String(seconds).padStart(2, "0")
           );
+
         }
 
-        return value;
-      }
-
-      const hours =
-        parseInt(match[1] || 0);
-
-      const minutes =
-        parseInt(match[2] || 0);
-
-      const seconds =
-        parseInt(match[3] || 0);
-
-      if (hours > 0) {
 
         return (
-          String(hours).padStart(2, "0") +
-          ":" +
           String(minutes).padStart(2, "0") +
           ":" +
           String(seconds).padStart(2, "0")
         );
-
       }
 
-      return (
-        String(minutes).padStart(2, "0") +
-        ":" +
-        String(seconds).padStart(2, "0")
-      );
+
+      /*
+      TikTok / Douyin số giây
+      */
+
+      const numeric =
+        Number(value);
+
+      if (
+        Number.isFinite(numeric)
+      ) {
+
+        const total =
+          Math.max(
+            0,
+            Math.round(numeric)
+          );
+
+        const minutes =
+          Math.floor(total / 60);
+
+        const seconds =
+          total % 60;
+
+        return (
+          String(minutes).padStart(2, "0") +
+          ":" +
+          String(seconds).padStart(2, "0")
+        );
+      }
+
+
+      return value;
     }
 
 
     /*
     ========================================
-    ANALYZE VIDEO
+    PHÂN TÍCH VIDEO
     ========================================
     */
 
@@ -778,11 +708,14 @@
           "analyzeButton"
         );
 
+
       const text =
         input.value.trim();
 
+
       result.style.display =
         "block";
+
 
       if (!text) {
 
@@ -795,8 +728,10 @@
         return;
       }
 
+
       const url =
         extractUrl(text);
+
 
       if (!url) {
 
@@ -809,16 +744,20 @@
         return;
       }
 
-      button.disabled = true;
+
+      button.disabled =
+        true;
 
       button.innerText =
         "⏳ ĐANG PHÂN TÍCH...";
+
 
       result.innerHTML = `
         <div class="status warning">
           ⏳ Đang lấy thông tin video...
         </div>
       `;
+
 
       try {
 
@@ -840,8 +779,10 @@
             }
           );
 
+
         const data =
           await response.json();
+
 
         if (
           !response.ok ||
@@ -854,18 +795,22 @@
           );
         }
 
+
         const video =
           data.video || data;
+
 
         const thumbnailUrl =
           video.thumbnail ||
           data.thumbnail ||
           null;
 
+
         const title =
           video.title ||
           data.title ||
           "Không có tiêu đề";
+
 
         const channel =
           video.channel ||
@@ -874,10 +819,12 @@
           data.author ||
           "Không có thông tin";
 
+
         const duration =
           video.duration ||
           data.duration ||
           null;
+
 
         const platform =
           data.platform ||
@@ -886,9 +833,9 @@
 
 
         /*
-        ========================================
+        ====================================
         THUMBNAIL
-        ========================================
+        ====================================
         */
 
         const thumbnail =
@@ -920,10 +867,18 @@
 
 
         /*
-        ========================================
-        VIDEO CARD
-        ========================================
+        ====================================
+        DOWNLOAD OPTIONS
+        ====================================
         */
+
+        const formats =
+          buildDownloadOptions(
+            data,
+            video,
+            url
+          );
+
 
         result.innerHTML = `
 
@@ -931,15 +886,18 @@
             ✅ Phân tích thành công!
           </div>
 
+
           <div class="video-card">
 
             ${thumbnail}
+
 
             <div class="video-content">
 
               <div class="video-title">
                 ${escapeHtml(title)}
               </div>
+
 
               <div class="video-info">
 
@@ -951,6 +909,7 @@
 
                 <br>
 
+
                 <span class="info-label">
                   ⏱️ Thời lượng:
                 </span>
@@ -958,6 +917,7 @@
                 ${formatDuration(duration)}
 
                 <br>
+
 
                 <span class="info-label">
                   🌐 Nền tảng:
@@ -967,44 +927,41 @@
 
               </div>
 
+
               <div class="video-url">
                 ${escapeHtml(
                   data.url || url
                 )}
               </div>
 
-              <div
-                id="downloadSection"
-                class="download-section"
-              >
+
+              <div class="download-section">
 
                 <div class="download-title">
-                  ⬇️ Tùy chọn tải xuống
+                  ⬇️ Chọn định dạng tải xuống
                 </div>
 
-                <div class="download-subtitle">
-                  Chọn định dạng và chất lượng bạn muốn tải.
-                </div>
 
                 <div
                   id="formatList"
                   class="format-list"
                 >
-
-                  <div class="formats-loading">
-                    ⏳ Đang kiểm tra các định dạng...
-                  </div>
-
+                  ${formats}
                 </div>
+
 
                 <button
                   id="downloadButton"
                   class="download-button"
                   onclick="downloadSelectedFormat()"
-                  disabled
                 >
                   ⬇️ TẢI XUỐNG
                 </button>
+
+
+                <div class="download-note">
+                  Tùy chọn tải xuống sẽ phụ thuộc vào dữ liệu mà máy chủ cung cấp.
+                </div>
 
               </div>
 
@@ -1015,20 +972,15 @@
         `;
 
 
-        /*
-        ========================================
-        LẤY FORMAT
-        ========================================
-        */
+        setupFormatSelection();
 
-        await loadFormats(url);
 
       } catch (error) {
 
         console.error(error);
 
-        result.innerHTML = `
 
+        result.innerHTML = `
           <div class="status error">
 
             ❌ Không lấy được thông tin video.
@@ -1042,12 +994,12 @@
             </span>
 
           </div>
-
         `;
 
       } finally {
 
-        button.disabled = false;
+        button.disabled =
+          false;
 
         button.innerText =
           "🔍 PHÂN TÍCH VIDEO";
@@ -1058,359 +1010,287 @@
 
     /*
     ========================================
-    LOAD FORMATS
+    TẠO CÁC LỰA CHỌN DOWNLOAD
     ========================================
     */
 
-    async function loadFormats(url) {
+    function buildDownloadOptions(
+      data,
+      video,
+      originalUrl
+    ) {
 
-      const list =
-        document.getElementById(
-          "formatList"
-        );
+      /*
+      Backend sau này có thể trả:
 
-      const downloadButton =
-        document.getElementById(
-          "downloadButton"
-        );
+      data.formats = [...]
 
-      if (!list) {
-        return;
-      }
+      hoặc:
 
-      try {
+      video.formats = [...]
+      */
 
-        const response =
-          await fetch(
-            API_URL + "/api/formats",
-            {
-              method: "POST",
+      const backendFormats =
+        data.formats ||
+        video.formats ||
+        null;
 
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
 
-              body:
-                JSON.stringify({
-                  url: url
-                })
+      if (
+        Array.isArray(backendFormats) &&
+        backendFormats.length > 0
+      ) {
+
+        return backendFormats
+          .map(
+            (format, index) => {
+
+              const formatId =
+                format.id ||
+                format.itag ||
+                index;
+
+
+              const name =
+                format.name ||
+                format.quality ||
+                format.label ||
+                format.ext?.toUpperCase() ||
+                "Video";
+
+
+              const type =
+                format.type ||
+                format.ext ||
+                "MP4";
+
+
+              const quality =
+                format.quality ||
+                format.resolution ||
+                "";
+
+
+              const url =
+                format.url ||
+                format.downloadUrl ||
+                format.download_url ||
+                "";
+
+
+              return `
+                <label
+                  class="format-option ${index === 0 ? "selected" : ""}"
+                  data-format-id="${escapeHtml(formatId)}"
+                  data-download-url="${escapeHtml(url)}"
+                  data-original-url="${escapeHtml(originalUrl)}"
+                >
+
+                  <input
+                    type="radio"
+                    name="videoFormat"
+                    class="format-radio"
+                    ${index === 0 ? "checked" : ""}
+                  >
+
+
+                  <div class="format-main">
+
+                    <div class="format-name">
+                      ${escapeHtml(name)}
+                    </div>
+
+                    <div class="format-details">
+                      ${escapeHtml(type)}
+                      ${quality ? " • " + escapeHtml(quality) : ""}
+                    </div>
+
+                  </div>
+
+
+                  <div class="format-badge">
+                    ${escapeHtml(
+                      String(type).toUpperCase()
+                    )}
+                  </div>
+
+                </label>
+              `;
             }
-          );
-
-        const data =
-          await response.json();
-
-        if (
-          !response.ok ||
-          !data.success
-        ) {
-
-          throw new Error(
-            data.message ||
-            "Chưa lấy được danh sách định dạng."
-          );
-        }
-
-        const formats =
-          Array.isArray(data.formats)
-            ? data.formats
-            : [];
-
-        if (
-          formats.length === 0
-        ) {
-
-          list.innerHTML = `
-            <div class="formats-loading">
-              ⚠️ Video này chưa có thông tin định dạng tải xuống.
-            </div>
-          `;
-
-          return;
-        }
-
-        renderFormats(
-          formats
-        );
-
-        if (downloadButton) {
-          downloadButton.disabled =
-            false;
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Format error:",
-          error
-        );
-
-        /*
-          Backend chưa có /api/formats
-          thì không làm hỏng phần metadata.
-        */
-
-        list.innerHTML = `
-          <div class="formats-loading">
-            ℹ️ Danh sách chất lượng sẽ được hiển thị khi máy chủ tải xuống được kết nối.
-          </div>
-        `;
-
-        if (downloadButton) {
-          downloadButton.disabled =
-            true;
-        }
+          )
+          .join("");
       }
+
+
+      /*
+      ====================================
+      FALLBACK
+      ====================================
+
+      Khi backend chưa trả formats,
+      giao diện vẫn hiển thị các lựa chọn
+      để chuẩn bị cho bước backend tiếp theo.
+      */
+
+      return `
+
+        <label
+          class="format-option selected"
+          data-format-id="mp4"
+          data-download-url=""
+          data-original-url="${escapeHtml(originalUrl)}"
+        >
+
+          <input
+            type="radio"
+            name="videoFormat"
+            class="format-radio"
+            checked
+          >
+
+          <div class="format-main">
+
+            <div class="format-name">
+              MP4
+            </div>
+
+            <div class="format-details">
+              Video • Chất lượng tự động
+            </div>
+
+          </div>
+
+          <div class="format-badge">
+            MP4
+          </div>
+
+        </label>
+
+
+        <label
+          class="format-option"
+          data-format-id="mp4-hd"
+          data-download-url=""
+          data-original-url="${escapeHtml(originalUrl)}"
+        >
+
+          <input
+            type="radio"
+            name="videoFormat"
+            class="format-radio"
+          >
+
+          <div class="format-main">
+
+            <div class="format-name">
+              MP4 HD
+            </div>
+
+            <div class="format-details">
+              Video • HD
+            </div>
+
+          </div>
+
+          <div class="format-badge">
+            HD
+          </div>
+
+        </label>
+
+
+        <label
+          class="format-option"
+          data-format-id="mp3"
+          data-download-url=""
+          data-original-url="${escapeHtml(originalUrl)}"
+        >
+
+          <input
+            type="radio"
+            name="videoFormat"
+            class="format-radio"
+          >
+
+          <div class="format-main">
+
+            <div class="format-name">
+              MP3
+            </div>
+
+            <div class="format-details">
+              Âm thanh • MP3
+            </div>
+
+          </div>
+
+          <div class="format-badge">
+            MP3
+          </div>
+
+        </label>
+      `;
     }
 
 
     /*
     ========================================
-    RENDER FORMATS
+    CHỌN FORMAT
     ========================================
     */
 
-    function renderFormats(formats) {
+    function setupFormatSelection() {
 
-      const list =
-        document.getElementById(
-          "formatList"
+      const options =
+        document.querySelectorAll(
+          ".format-option"
         );
 
-      if (!list) {
-        return;
-      }
 
-      /*
-        Loại bỏ format trùng nhau
-        theo loại + độ phân giải.
-      */
+      options.forEach(
+        option => {
 
-      const unique =
-        [];
+          option.addEventListener(
+            "click",
+            () => {
 
-      const seen =
-        new Set();
-
-      for (
-        const format of formats
-      ) {
-
-        const extension =
-          String(
-            format.extension ||
-            format.ext ||
-            ""
-          ).toLowerCase();
-
-        const height =
-          format.height ||
-          "";
-
-        const hasVideo =
-          format.hasVideo !== false;
-
-        const hasAudio =
-          format.hasAudio !== false;
-
-        let type =
-          hasVideo
-            ? "video"
-            : "audio";
-
-        const key =
-          `${type}-${extension}-${height}`;
-
-        if (
-          seen.has(key)
-        ) {
-          continue;
-        }
-
-        seen.add(key);
-
-        unique.push({
-          ...format,
-          type
-        });
-      }
+              options.forEach(
+                item => {
+                  item.classList.remove(
+                    "selected"
+                  );
+                }
+              );
 
 
-      /*
-        Sắp xếp:
+              option.classList.add(
+                "selected"
+              );
 
-        Video trước
-        Độ phân giải cao trước
-        Audio sau
-      */
 
-      unique.sort(
-        (a, b) => {
+              const radio =
+                option.querySelector(
+                  ".format-radio"
+                );
 
-          if (
-            a.type !== b.type
-          ) {
 
-            return a.type === "video"
-              ? -1
-              : 1;
-          }
+              if (radio) {
+                radio.checked =
+                  true;
+              }
 
-          return (
-            Number(b.height || 0) -
-            Number(a.height || 0)
+            }
           );
+
         }
       );
 
-
-      list.innerHTML =
-        unique.map(
-          (format, index) => {
-
-            const extension =
-              String(
-                format.extension ||
-                format.ext ||
-                "mp4"
-              ).toUpperCase();
-
-            const height =
-              format.height;
-
-            const hasVideo =
-              format.hasVideo !== false;
-
-            const hasAudio =
-              format.hasAudio !== false;
-
-            let name;
-
-            let detail;
-
-            let icon;
-
-            if (
-              hasVideo
-            ) {
-
-              const quality =
-                height
-                  ? `${height}p`
-                  : (
-                      format.resolution ||
-                      "Video"
-                    );
-
-              name =
-                `${extension} • ${quality}`;
-
-              if (
-                Number(height) >= 1080
-              ) {
-
-                detail =
-                  "Video • Full HD";
-
-              } else if (
-                Number(height) >= 720
-              ) {
-
-                detail =
-                  "Video • HD";
-
-              } else {
-
-                detail =
-                  "Video";
-              }
-
-              icon = "🎥";
-
-            } else {
-
-              name =
-                "MP3 • Audio";
-
-              detail =
-                "Âm thanh";
-
-              icon = "🎵";
-            }
-
-            const size =
-              format.filesize ||
-              format.filesizeApprox;
-
-            const sizeText =
-              size
-                ? formatFileSize(size)
-                : "";
-
-            return `
-
-              <div class="format-option">
-
-                <input
-                  type="radio"
-                  name="videoFormat"
-                  id="format-${index}"
-                  value="${index}"
-                >
-
-                <label
-                  class="format-label"
-                  for="format-${index}"
-                >
-
-                  <span class="format-radio"></span>
-
-                  <span class="format-icon">
-                    ${icon}
-                  </span>
-
-                  <span class="format-main">
-
-                    <span class="format-name">
-                      ${escapeHtml(name)}
-                    </span>
-
-                    <span class="format-detail">
-                      ${escapeHtml(detail)}
-                      ${sizeText
-                        ? " • " + escapeHtml(sizeText)
-                        : ""}
-                    </span>
-
-                  </span>
-
-                  <span class="format-badge">
-                    ${extension}
-                  </span>
-
-                </label>
-
-              </div>
-
-            `;
-          }
-        )
-        .join("");
-
-      /*
-        Lưu format để nút download
-        biết người dùng chọn cái nào.
-      */
-
-      window.availableFormats =
-        unique;
     }
 
 
     /*
     ========================================
-    DOWNLOAD SELECTED FORMAT
+    TẢI FORMAT ĐÃ CHỌN
     ========================================
     */
 
@@ -1418,149 +1298,63 @@
 
       const selected =
         document.querySelector(
-          'input[name="videoFormat"]:checked'
+          ".format-option.selected"
         );
+
 
       if (!selected) {
 
         alert(
-          "Vui lòng chọn định dạng trước."
+          "Vui lòng chọn định dạng tải xuống."
         );
 
         return;
       }
 
-      const index =
-        Number(
-          selected.value
-        );
 
-      const formats =
-        window.availableFormats ||
-        [];
+      const downloadUrl =
+        selected.dataset.downloadUrl;
 
-      const format =
-        formats[index];
-
-      if (!format) {
-
-        alert(
-          "Không tìm thấy định dạng đã chọn."
-        );
-
-        return;
-      }
 
       /*
-        Nếu backend đã trả URL trực tiếp,
-        có thể sử dụng URL đó.
-
-        Sau này ta sẽ chuyển sang
-        endpoint download của backend
-        để xử lý ổn định hơn.
+      Nếu backend đã cung cấp URL tải
+      thì mở URL đó.
       */
 
-      if (
-        format.url
-      ) {
+      if (downloadUrl) {
 
-        const link =
-          document.createElement(
-            "a"
-          );
-
-        link.href =
-          format.url;
-
-        link.target =
-          "_blank";
-
-        link.rel =
-          "noopener noreferrer";
-
-        document.body.appendChild(
-          link
-        );
-
-        link.click();
-
-        link.remove();
+        window.location.href =
+          downloadUrl;
 
         return;
       }
 
+
+      /*
+      Hiện tại backend chưa có API
+      tạo link download.
+
+      Vì vậy chưa giả vờ tải file.
+      */
+
       alert(
-        "Định dạng này chưa có đường dẫn tải. Backend cần cung cấp URL tải xuống."
+        "Định dạng đã được chọn. Backend tải xuống sẽ được kết nối ở bước tiếp theo."
       );
     }
 
 
     /*
     ========================================
-    FILE SIZE
-    ========================================
-    */
-
-    function formatFileSize(bytes) {
-
-      const value =
-        Number(bytes);
-
-      if (
-        !Number.isFinite(value) ||
-        value <= 0
-      ) {
-        return "";
-      }
-
-      const units =
-        [
-          "B",
-          "KB",
-          "MB",
-          "GB"
-        ];
-
-      let size =
-        value;
-
-      let index =
-        0;
-
-      while (
-        size >= 1024 &&
-        index < units.length - 1
-      ) {
-
-        size /= 1024;
-
-        index++;
-      }
-
-      return (
-        size.toFixed(
-          size >= 100
-            ? 0
-            : 1
-        ) +
-        " " +
-        units[index]
-      );
-    }
-
-
-    /*
-    ========================================
-    PLATFORM ICON
+    ICON PLATFORM
     ========================================
     */
 
     function getPlatformIcon(platform) {
 
       const name =
-        String(
-          platform || ""
-        ).toLowerCase();
+        String(platform || "")
+          .toLowerCase();
+
 
       if (
         name.includes("youtube")
@@ -1568,11 +1362,13 @@
         return "▶️";
       }
 
+
       if (
         name.includes("tiktok")
       ) {
         return "🎵";
       }
+
 
       if (
         name.includes("facebook")
@@ -1580,11 +1376,13 @@
         return "📘";
       }
 
+
       if (
         name.includes("douyin")
       ) {
         return "🎵";
       }
+
 
       return "🎬";
     }
@@ -1625,30 +1423,6 @@
           "&#039;"
         );
     }
-
-
-    /*
-    ========================================
-    ENTER = ANALYZE
-    ========================================
-    */
-
-    document
-      .getElementById("videoUrl")
-      .addEventListener(
-        "keydown",
-        function(event) {
-
-          if (
-            event.ctrlKey &&
-            event.key === "Enter"
-          ) {
-
-            analyzeVideo();
-          }
-
-        }
-      );
 
   </script></body>
 </html>
