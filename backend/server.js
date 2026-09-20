@@ -1,26 +1,31 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json());
 
 /*
-========================================
-YT-DLP
-========================================
+====================================
+TRANG KIỂM TRA
+====================================
 */
 
-const youtubedl = require("youtube-dl-exec");
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "My Video Tool backend đang hoạt động!"
+  });
+});
 
 /*
-========================================
+====================================
 LOG
-========================================
+====================================
 */
 
 function logStep(message, data = "") {
@@ -32,111 +37,365 @@ function logStep(message, data = "") {
 }
 
 /*
-========================================
-TRANG KIỂM TRA
-========================================
+====================================
+HTTP FETCH
+====================================
 */
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "My Video Tool backend đang hoạt động!",
-    version: "2.0.0"
+async function fetchPage(url) {
+  logStep("🌐 Đang truy cập:", url);
+
+  const response = await fetch(url, {
+    method: "GET",
+    redirect: "follow",
+
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+
+      "Accept-Language":
+        "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+
+      "Accept":
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache"
+    }
   });
-});
+
+  const html = await response.text();
+
+  logStep(
+    `📄 HTTP ${response.status}`,
+    `URL cuối: ${response.url}`
+  );
+
+  logStep(
+    "📦 Kích thước HTML:",
+    `${html.length} ký tự`
+  );
+
+  return {
+    response,
+    html
+  };
+}
 
 /*
-========================================
-HEALTH
-========================================
+====================================
+HTML DECODE
+====================================
 */
 
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    status: "ok"
-  });
-});
+function decodeHtml(value) {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#x2F;/gi, "/")
+    .replace(/&#47;/gi, "/")
+    .replace(/\u00A0/g, " ")
+    .trim();
+}
 
 /*
-========================================
-KIỂM TRA URL
-========================================
+====================================
+META
+====================================
 */
 
-function isValidHttpUrl(value) {
+function getMeta(html, property) {
+  if (!html) {
+    return "";
+  }
+
+  const escaped = String(property).replace(
+    /[-/\\^$*+?.()|[\]{}]/g,
+    "\\$&"
+  );
+
+  const patterns = [
+    new RegExp(
+      `<meta[^>]+property=["']${escaped}["'][^>]+content=["']([^"']*)["'][^>]*>`,
+      "i"
+    ),
+
+    new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]+property=["']${escaped}["'][^>]*>`,
+      "i"
+    ),
+
+    new RegExp(
+      `<meta[^>]+name=["']${escaped}["'][^>]+content=["']([^"']*)["'][^>]*>`,
+      "i"
+    ),
+
+    new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]+name=["']${escaped}["'][^>]*>`,
+      "i"
+    )
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+
+    if (match && match[1]) {
+      return decodeHtml(match[1]);
+    }
+  }
+
+  return "";
+}
+
+/*
+====================================
+JSON
+====================================
+*/
+
+function safeJsonParse(value) {
   try {
-    const url = new URL(value);
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
 
-    return (
-      url.protocol === "http:" ||
-      url.protocol === "https:"
+/*
+====================================
+TÌM JSON SCRIPT
+====================================
+*/
+
+function extractJsonScript(html, id) {
+  if (!html) {
+    return null;
+  }
+
+  const escapedId = String(id).replace(
+    /[-/\\^$*+?.()|[\]{}]/g,
+    "\\$&"
+  );
+
+  const pattern = new RegExp(
+    `<script[^>]+id=["']${escapedId}["'][^>]*>([\\s\\S]*?)<\\/script>`,
+    "i"
+  );
+
+  const match = html.match(pattern);
+
+  if (!match || !match[1]) {
+    return null;
+  }
+
+  return safeJsonParse(match[1].trim());
+}
+
+/*
+====================================
+DECODE JSON STRING
+====================================
+*/
+
+function decodeJsonString(value) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return JSON.parse(`"${value}"`);
+  } catch {
+    return String(value)
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\\u002F/gi, "/")
+      .replace(/\\\//g, "/");
+  }
+}
+
+/*
+====================================
+TÌM VALUE RECURSIVE
+====================================
+*/
+
+function findValueDeep(object, keys, depth = 0) {
+  if (
+    !object ||
+    depth > 15 ||
+    typeof object !== "object"
+  ) {
+    return "";
+  }
+
+  const wantedKeys = keys.map((key) =>
+    String(key).toLowerCase()
+  );
+
+  if (Array.isArray(object)) {
+    for (const item of object) {
+      const found = findValueDeep(
+        item,
+        wantedKeys,
+        depth + 1
+      );
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return "";
+  }
+
+  for (const key of Object.keys(object)) {
+    const lowerKey = key.toLowerCase();
+
+    if (wantedKeys.includes(lowerKey)) {
+      const value = object[key];
+
+      if (
+        typeof value === "string" &&
+        value.trim()
+      ) {
+        return value.trim();
+      }
+
+      if (typeof value === "number") {
+        return String(value);
+      }
+    }
+  }
+
+  for (const key of Object.keys(object)) {
+    const found = findValueDeep(
+      object[key],
+      wantedKeys,
+      depth + 1
     );
-  } catch {
-    return false;
+
+    if (found) {
+      return found;
+    }
   }
+
+  return "";
 }
 
 /*
-========================================
-NỀN TẢNG
-========================================
+====================================
+TÌM IMAGE RECURSIVE
+====================================
 */
 
-function detectPlatform(url) {
-  try {
-    const host = new URL(url)
-      .hostname
-      .toLowerCase()
-      .replace(/^www\./, "");
-
-    if (
-      host === "youtube.com" ||
-      host.endsWith(".youtube.com") ||
-      host === "youtu.be"
-    ) {
-      return "YouTube";
-    }
-
-    if (
-      host === "tiktok.com" ||
-      host.endsWith(".tiktok.com")
-    ) {
-      return "TikTok";
-    }
-
-    if (
-      host === "douyin.com" ||
-      host.endsWith(".douyin.com")
-    ) {
-      return "Douyin";
-    }
-
-    if (
-      host === "facebook.com" ||
-      host.endsWith(".facebook.com") ||
-      host === "fb.watch"
-    ) {
-      return "Facebook";
-    }
-
-    if (
-      host === "instagram.com" ||
-      host.endsWith(".instagram.com")
-    ) {
-      return "Instagram";
-    }
-
-    return "Video";
-  } catch {
-    return "Video";
+function findImageDeep(object, depth = 0) {
+  if (
+    !object ||
+    depth > 15 ||
+    typeof object !== "object"
+  ) {
+    return "";
   }
+
+  if (Array.isArray(object)) {
+    for (const item of object) {
+      const found = findImageDeep(
+        item,
+        depth + 1
+      );
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return "";
+  }
+
+  const preferredKeys = [
+    "origincover",
+    "origin_cover",
+    "origincoverurl",
+    "origin_cover_url",
+    "dynamiccover",
+    "dynamic_cover",
+    "cover",
+    "coverurl",
+    "cover_url",
+    "thumbnail",
+    "thumbnailurl",
+    "thumbnail_url"
+  ];
+
+  for (const key of preferredKeys) {
+    const value = object[key];
+
+    if (
+      typeof value === "string" &&
+      /^https?:\/\//i.test(value)
+    ) {
+      return value;
+    }
+
+    if (
+      value &&
+      typeof value === "object"
+    ) {
+      const nested = findImageDeep(
+        value,
+        depth + 1
+      );
+
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  for (const key of Object.keys(object)) {
+    const value = object[key];
+
+    if (
+      typeof value === "string" &&
+      /^https?:\/\//i.test(value) &&
+      (
+        key.toLowerCase().includes("cover") ||
+        key.toLowerCase().includes("image") ||
+        key.toLowerCase().includes("thumb")
+      )
+    ) {
+      return value;
+    }
+  }
+
+  for (const key of Object.keys(object)) {
+    const found = findImageDeep(
+      object[key],
+      depth + 1
+    );
+
+    if (found) {
+      return found;
+    }
+  }
+
+  return "";
 }
 
 /*
-========================================
-FORMAT DURATION
-========================================
+====================================
+DURATION
+====================================
 */
 
 function normalizeDuration(value) {
@@ -148,415 +407,1397 @@ function normalizeDuration(value) {
     return null;
   }
 
-  const number = Number(value);
+  const numeric = Number(value);
 
-  if (!Number.isFinite(number)) {
+  if (
+    !Number.isFinite(numeric) ||
+    numeric < 0
+  ) {
     return null;
   }
 
-  return Math.round(number);
+  /*
+  Nếu >= 1000 thì giả định milliseconds.
+  */
+
+  if (numeric >= 1000) {
+    return Math.round(numeric / 1000);
+  }
+
+  return Math.round(numeric);
 }
 
 /*
-========================================
-FORMAT BYTES
-========================================
+====================================
+YOUTUBE
+====================================
 */
 
-function formatBytes(bytes) {
-  const value = Number(bytes);
+function getYouTubeVideoId(url) {
+  try {
+    const parsed = new URL(url);
 
-  if (!Number.isFinite(value) || value <= 0) {
-    return "";
+    const host = parsed.hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      return (
+        parsed.pathname
+          .split("/")
+          .filter(Boolean)[0] || null
+      );
+    }
+
+    if (
+      host === "youtube.com" ||
+      host.endsWith(".youtube.com")
+    ) {
+      const videoId =
+        parsed.searchParams.get("v");
+
+      if (videoId) {
+        return videoId;
+      }
+
+      const parts = parsed.pathname
+        .split("/")
+        .filter(Boolean);
+
+      if (
+        parts[0] === "shorts" &&
+        parts[1]
+      ) {
+        return parts[1];
+      }
+
+      if (
+        parts[0] === "live" &&
+        parts[1]
+      ) {
+        return parts[1];
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
   }
-
-  if (value < 1024 * 1024) {
-    return `${Math.round(value / 1024)} KB`;
-  }
-
-  if (value < 1024 * 1024 * 1024) {
-    return `${(value / 1024 / 1024).toFixed(1)} MB`;
-  }
-
-  return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
 /*
-========================================
-CHỌN FORMAT VIDEO
-========================================
+====================================
+TIKTOK
+====================================
 */
 
-function buildVideoFormats(info) {
-  const formats = Array.isArray(info.formats)
-    ? info.formats
-    : [];
+function isTikTokUrl(url) {
+  try {
+    const host = new URL(url)
+      .hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
 
-  const result = [];
+    return (
+      host === "tiktok.com" ||
+      host.endsWith(".tiktok.com")
+    );
+  } catch {
+    return false;
+  }
+}
 
-  /*
-  ========================================
-  VIDEO + AUDIO
-  ========================================
-  */
+function isTikTokShortUrl(url) {
+  try {
+    const host = new URL(url)
+      .hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
 
-  const progressive = formats
-    .filter((format) => {
-      const hasVideo =
-        format.vcodec &&
-        format.vcodec !== "none";
+    return (
+      host === "vt.tiktok.com" ||
+      host === "vm.tiktok.com"
+    );
+  } catch {
+    return false;
+  }
+}
 
-      const hasAudio =
-        format.acodec &&
-        format.acodec !== "none";
+async function resolveTikTokUrl(url) {
+  try {
+    logStep(
+      "🎵 TikTok short URL:",
+      url
+    );
 
-      return hasVideo && hasAudio;
-    })
-    .filter((format) => {
-      return (
-        format.ext === "mp4" ||
-        format.ext === "webm" ||
-        format.ext === "mkv"
-      );
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+        "Accept-Language":
+          "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
+      }
     });
 
-  /*
-  Ưu tiên MP4.
-  */
+    logStep(
+      "🎵 TikTok URL cuối:",
+      response.url
+    );
 
-  const mp4 = progressive
-    .filter((format) => format.ext === "mp4")
-    .sort((a, b) => {
-      return (
-        Number(b.height || 0) -
-        Number(a.height || 0)
-      );
+    return response.url || null;
+  } catch (error) {
+    console.error(
+      "❌ TikTok redirect error:",
+      error.message
+    );
+
+    return null;
+  }
+}
+
+/*
+====================================
+TIKTOK METADATA
+====================================
+*/
+
+async function getTikTokMetadata(url) {
+  try {
+    logStep("🎵 Gọi TikTok oEmbed:", url);
+
+    /*
+    ====================================
+    OEMBED
+    ====================================
+    */
+
+    const apiUrl =
+      "https://www.tiktok.com/oembed?url=" +
+      encodeURIComponent(url);
+
+    const response = await fetch(apiUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+
+        "Accept":
+          "application/json,text/plain,*/*",
+
+        "Accept-Language":
+          "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
+      }
     });
 
-  /*
-  Chỉ lấy các độ phân giải hữu ích.
-  */
+    logStep(
+      "🎵 TikTok oEmbed HTTP:",
+      response.status
+    );
 
-  const wantedHeights = [
-    360,
-    480,
-    720,
-    1080,
-    1440,
-    2160
-  ];
+    let title = "";
+    let channel = "";
+    let thumbnail = "";
+    let description = "";
+    let duration = null;
 
-  const addedHeights = new Set();
+    if (response.ok) {
+      try {
+        const data = await response.json();
 
-  for (const format of mp4) {
-    const height =
-      Number(format.height || 0);
+        title =
+          typeof data.title === "string"
+            ? data.title.trim()
+            : "";
 
-    if (!height) {
-      continue;
+        channel =
+          typeof data.author_name === "string"
+            ? data.author_name.trim()
+            : "";
+
+        thumbnail =
+          typeof data.thumbnail_url === "string"
+            ? data.thumbnail_url.trim()
+            : "";
+
+        description =
+          typeof data.description === "string"
+            ? data.description.trim()
+            : "";
+
+        logStep(
+          "🎵 TikTok oEmbed metadata:",
+          JSON.stringify({
+            title,
+            author: channel,
+            thumbnail,
+            description
+          })
+        );
+      } catch (oembedError) {
+        console.error(
+          "⚠️ TikTok oEmbed JSON error:",
+          oembedError.message
+        );
+      }
     }
 
-    if (!wantedHeights.includes(height)) {
-      continue;
-    }
+    /*
+    ====================================
+    LẤY HTML TRANG TIKTOK
+    ====================================
+    */
 
-    if (addedHeights.has(height)) {
-      continue;
-    }
+    try {
+      logStep(
+        "🎵 Đang đọc HTML TikTok để tìm metadata..."
+      );
 
-    if (!format.url) {
-      continue;
-    }
+      const pageResponse = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
 
-    addedHeights.add(height);
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
 
-    result.push({
-      id: `mp4-${height}`,
-      type: "video",
-      ext: "mp4",
-      label:
-        height >= 1080
-          ? `MP4 ${height}p`
-          : `MP4 ${height}p`,
-      quality: `${height}p`,
-      width: Number(format.width || 0),
-      height,
-      filesize:
-        format.filesize ||
-        format.filesize_approx ||
-        null,
-      filesizeText:
-        format.filesize ||
-        format.filesize_approx
-          ? formatBytes(
-              format.filesize ||
-              format.filesize_approx
+          "Accept":
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+
+          "Accept-Language":
+            "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+
+          "Cache-Control":
+            "no-cache",
+
+          "Pragma":
+            "no-cache"
+        }
+      });
+
+      const html = await pageResponse.text();
+
+      logStep(
+        "🎵 TikTok HTML HTTP:",
+        pageResponse.status
+      );
+
+      logStep(
+        "🎵 TikTok HTML size:",
+        `${html.length} ký tự`
+      );
+
+      /*
+      ====================================
+      META TAG
+      ====================================
+      */
+
+      if (!title) {
+        title =
+          getMeta(html, "og:title") ||
+          getMeta(html, "twitter:title") ||
+          getMeta(html, "title") ||
+          "";
+      }
+
+      if (!description) {
+        description =
+          getMeta(html, "og:description") ||
+          getMeta(html, "twitter:description") ||
+          "";
+      }
+
+      if (!thumbnail) {
+        thumbnail =
+          getMeta(html, "og:image") ||
+          getMeta(html, "twitter:image") ||
+          "";
+      }
+
+      if (!channel) {
+        channel =
+          getMeta(html, "author") ||
+          "";
+      }
+
+      /*
+      ====================================
+      JSON-LD
+      ====================================
+      */
+
+      const jsonLdMatches =
+        html.match(
+          /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+        ) || [];
+
+      for (const script of jsonLdMatches) {
+        const jsonText =
+          script
+            .replace(
+              /<script[^>]*>/i,
+              ""
             )
-          : "",
-      url: format.url
-    });
+            .replace(
+              /<\/script>$/i,
+              ""
+            )
+            .trim();
+
+        const jsonData =
+          safeJsonParse(jsonText);
+
+        if (!jsonData) {
+          continue;
+        }
+
+        if (!title) {
+          title =
+            findValueDeep(
+              jsonData,
+              [
+                "headline",
+                "name",
+                "title",
+                "description"
+              ]
+            ) || "";
+        }
+
+        if (!description) {
+          description =
+            findValueDeep(
+              jsonData,
+              [
+                "description"
+              ]
+            ) || "";
+        }
+
+        if (!channel) {
+          channel =
+            findValueDeep(
+              jsonData,
+              [
+                "author",
+                "creator",
+                "author_name",
+                "authorName",
+                "nickname",
+                "username"
+              ]
+            ) || "";
+        }
+
+        if (!thumbnail) {
+          thumbnail =
+            findImageDeep(jsonData) || "";
+        }
+
+        if (!duration) {
+          const jsonDuration =
+            findValueDeep(
+              jsonData,
+              [
+                "duration",
+                "duration_ms",
+                "durationMs"
+              ]
+            );
+
+          duration =
+            normalizeDuration(
+              jsonDuration
+            );
+        }
+      }
+
+      /*
+      ====================================
+      TÌM TITLE TRONG HTML / JSON
+      ====================================
+      */
+
+      if (!title) {
+        const titlePatterns = [
+
+          /"desc"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"description"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"shareTitle"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"share_title"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /<title[^>]*>([\s\S]*?)<\/title>/i
+        ];
+
+        for (
+          const pattern of titlePatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            const candidate =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (
+              candidate &&
+              candidate.length > 1 &&
+              !candidate
+                .toLowerCase()
+                .includes("tiktok")
+            ) {
+              title = candidate;
+              break;
+            }
+          }
+        }
+      }
+
+      /*
+      ====================================
+      TÌM AUTHOR
+      ====================================
+      */
+
+      if (!channel) {
+        const authorPatterns = [
+
+          /"nickname"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"author_name"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"authorName"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"unique_id"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"uniqueId"\s*:\s*"((?:\\.|[^"\\])*)"/i,
+
+          /"username"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        ];
+
+        for (
+          const pattern of authorPatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            channel =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (channel) {
+              break;
+            }
+          }
+        }
+      }
+
+      /*
+      ====================================
+      TÌM THUMBNAIL
+      ====================================
+      */
+
+      if (!thumbnail) {
+        const imagePatterns = [
+
+          /"originCover"\s*:\s*"([^"]+)"/i,
+
+          /"origin_cover"\s*:\s*"([^"]+)"/i,
+
+          /"dynamicCover"\s*:\s*"([^"]+)"/i,
+
+          /"dynamic_cover"\s*:\s*"([^"]+)"/i,
+
+          /"cover"\s*:\s*"([^"]+)"/i,
+
+          /"coverUrl"\s*:\s*"([^"]+)"/i,
+
+          /"cover_url"\s*:\s*"([^"]+)"/i
+        ];
+
+        for (
+          const pattern of imagePatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            thumbnail =
+              decodeJsonString(
+                match[1]
+              ).trim();
+
+            if (
+              /^https?:\/\//i.test(
+                thumbnail
+              )
+            ) {
+              break;
+            }
+
+            thumbnail = "";
+          }
+        }
+      }
+
+      /*
+      ====================================
+      DURATION
+      ====================================
+      */
+
+      if (duration === null) {
+        const durationPatterns = [
+
+          /"duration"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"duration_ms"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"durationMs"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"video_duration"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"videoDuration"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"playTime"\s*:\s*(\d+(?:\.\d+)?)/i,
+
+          /"play_time"\s*:\s*(\d+(?:\.\d+)?)/i
+        ];
+
+        for (
+          const pattern of durationPatterns
+        ) {
+          const match =
+            html.match(pattern);
+
+          if (
+            match &&
+            match[1]
+          ) {
+            duration =
+              normalizeDuration(
+                match[1]
+              );
+
+            if (
+              duration !== null
+            ) {
+              logStep(
+                "🎵 Tìm thấy TikTok duration:",
+                `${duration} giây`
+              );
+
+              break;
+            }
+          }
+        }
+      }
+
+      /*
+      ====================================
+      QUÉT SCRIPT CUỐI CÙNG
+      ====================================
+      */
+
+      if (
+        !title ||
+        !channel ||
+        !thumbnail ||
+        duration === null
+      ) {
+        const scripts =
+          html.match(
+            /<script[^>]*>([\s\S]*?)<\/script>/gi
+          ) || [];
+
+        logStep(
+          "🎵 TikTok scripts:",
+          scripts.length
+        );
+
+        for (
+          const script of scripts
+        ) {
+          if (
+            script.length < 100
+          ) {
+            continue;
+          }
+
+          const text =
+            script
+              .replace(
+                /<script[^>]*>/i,
+                ""
+              )
+              .replace(
+                /<\/script>$/i,
+                ""
+              );
+
+          /*
+          TITLE
+          */
+
+          if (!title) {
+            const match =
+              text.match(
+                /"(?:desc|title|description|shareTitle|share_title)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              title =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+            }
+          }
+
+          /*
+          AUTHOR
+          */
+
+          if (!channel) {
+            const match =
+              text.match(
+                /"(?:nickname|author_name|authorName|username|unique_id|uniqueId)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              channel =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+            }
+          }
+
+          /*
+          THUMBNAIL
+          */
+
+          if (!thumbnail) {
+            const match =
+              text.match(
+                /"(?:originCover|origin_cover|dynamicCover|dynamic_cover|cover|coverUrl|cover_url)"\s*:\s*"([^"]+)"/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              const image =
+                decodeJsonString(
+                  match[1]
+                ).trim();
+
+              if (
+                /^https?:\/\//i.test(
+                  image
+                )
+              ) {
+                thumbnail = image;
+              }
+            }
+          }
+
+          /*
+          DURATION
+          */
+
+          if (duration === null) {
+            const match =
+              text.match(
+                /"(?:duration|duration_ms|durationMs|video_duration|videoDuration|playTime|play_time)"\s*:\s*(\d+(?:\.\d+)?)/i
+              );
+
+            if (
+              match &&
+              match[1]
+            ) {
+              duration =
+                normalizeDuration(
+                  match[1]
+                );
+            }
+          }
+
+          if (
+            title &&
+            channel &&
+            thumbnail &&
+            duration !== null
+          ) {
+            break;
+          }
+        }
+      }
+
+      /*
+      ====================================
+      LOẠI BỎ TITLE KHÔNG HỮU ÍCH
+      ====================================
+      */
+
+      if (title) {
+        title =
+          title
+            .replace(
+              /^\s*TikTok\s*[-|:]\s*/i,
+              ""
+            )
+            .trim();
+      }
+
+    } catch (pageError) {
+      console.error(
+        "⚠️ TikTok HTML error:",
+        pageError.message
+      );
+    }
+
+    /*
+    ====================================
+    KẾT QUẢ
+    ====================================
+    */
+
+    logStep(
+      "🎵 TikTok metadata cuối:",
+      JSON.stringify({
+        title,
+        author: channel,
+        thumbnail,
+        description,
+        duration
+      })
+    );
+
+    return {
+      title:
+        title || "",
+
+      channel:
+        channel || "",
+
+      thumbnail:
+        thumbnail || "",
+
+      description:
+        description || "",
+
+      duration:
+        duration !== null
+          ? duration
+          : null
+    };
+
+  } catch (error) {
+    console.error(
+      "❌ TikTok metadata error:",
+      error.message
+    );
+
+    return null;
+  }
+}
+
+async function resolveDouyinUrl(url) {
+  try {
+    logStep(
+      "🎵 Douyin URL:",
+      url
+    );
+
+    const result = await fetchPage(url);
+
+    logStep(
+      "🎵 Douyin URL cuối:",
+      result.response.url
+    );
+
+    return result.response.url || url;
+  } catch (error) {
+    console.error(
+      "❌ Douyin redirect error:",
+      error.message
+    );
+
+    return url;
+  }
+}
+
+/*
+====================================
+PARSE DOUYIN EMBEDDED DATA
+====================================
+*/
+
+function parseDouyinEmbeddedData(html) {
+  let title = "";
+  let channel = "";
+  let thumbnail = "";
+  let description = "";
+  let duration = null;
+
+  const nextData =
+    extractJsonScript(html, "NEXT_DATA");
+
+  if (nextData) {
+    logStep(
+      "🎵 Đã tìm thấy NEXT_DATA"
+    );
+
+    title =
+      title ||
+      findValueDeep(nextData, [
+        "desc",
+        "title",
+        "description"
+      ]);
+
+    channel =
+      channel ||
+      findValueDeep(nextData, [
+        "nickname",
+        "authorname",
+        "author_name",
+        "authorName",
+        "username",
+        "unique_id",
+        "uniqueId"
+      ]);
+
+    thumbnail =
+      thumbnail ||
+      findImageDeep(nextData);
+
+    description =
+      description ||
+      findValueDeep(nextData, [
+        "description",
+        "desc"
+      ]);
+
+    const nextDuration =
+      findValueDeep(nextData, [
+        "duration",
+        "durationms",
+        "duration_ms"
+      ]);
+
+    duration =
+      duration ||
+      normalizeDuration(nextDuration);
+  } else {
+    logStep(
+      "⚠️ Không tìm thấy NEXT_DATA"
+    );
   }
 
   /*
-  ========================================
-  NẾU KHÔNG CÓ PROGRESSIVE MP4
-  ========================================
+  ==================================
+  RENDER_DATA
+  ==================================
   */
 
-  if (result.length === 0) {
-    const fallback = formats
-      .filter((format) => {
-        return (
-          format.ext === "mp4" &&
-          format.vcodec &&
-          format.vcodec !== "none" &&
-          format.url
-        );
-      })
-      .sort((a, b) => {
-        return (
-          Number(b.height || 0) -
-          Number(a.height || 0)
-        );
-      });
+  const renderMatch = html.match(
+    /<script[^>]+id=["']RENDER_DATA["'][^>]*>([\s\S]*?)<\/script>/i
+  );
 
-    for (const format of fallback) {
-      const height =
-        Number(format.height || 0);
+  if (
+    renderMatch &&
+    renderMatch[1]
+  ) {
+    logStep(
+      "🎵 Đã tìm thấy RENDER_DATA"
+    );
 
-      if (!height) {
+    let encoded =
+      renderMatch[1].trim();
+
+    try {
+      encoded = decodeURIComponent(encoded);
+    } catch {}
+
+    const renderData =
+      safeJsonParse(encoded);
+
+    if (renderData) {
+      title =
+        title ||
+        findValueDeep(renderData, [
+          "desc",
+          "title",
+          "description"
+        ]);
+
+      channel =
+        channel ||
+        findValueDeep(renderData, [
+          "nickname",
+          "authorname",
+          "author_name",
+          "authorName",
+          "username",
+          "unique_id",
+          "uniqueId"
+        ]);
+
+      thumbnail =
+        thumbnail ||
+        findImageDeep(renderData);
+
+      description =
+        description ||
+        findValueDeep(renderData, [
+          "description",
+          "desc"
+        ]);
+
+      const renderDuration =
+        findValueDeep(renderData, [
+          "duration",
+          "durationms",
+          "duration_ms"
+        ]);
+
+      duration =
+        duration ||
+        normalizeDuration(renderDuration);
+    }
+  } else {
+    logStep(
+      "⚠️ Không tìm thấy RENDER_DATA"
+    );
+  }
+
+  /*
+  ==================================
+  JSON-LD
+  ==================================
+  */
+
+  const jsonLdMatches =
+    html.match(
+      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+    ) || [];
+
+  for (const script of jsonLdMatches) {
+    const jsonText = script
+      .replace(/<script[^>]*>/i, "")
+      .replace(/<\/script>$/i, "")
+      .trim();
+
+    const jsonData =
+      safeJsonParse(jsonText);
+
+    if (!jsonData) {
+      continue;
+    }
+
+    title =
+      title ||
+      findValueDeep(jsonData, [
+        "headline",
+        "name",
+        "description"
+      ]);
+
+    channel =
+      channel ||
+      findValueDeep(jsonData, [
+        "author",
+        "creator",
+        "name"
+      ]);
+
+    thumbnail =
+      thumbnail ||
+      findImageDeep(jsonData);
+
+    duration =
+      duration ||
+      normalizeDuration(
+        findValueDeep(jsonData, [
+          "duration"
+        ])
+      );
+  }
+
+  /*
+  ==================================
+  QUÉT SCRIPT FALLBACK
+  ==================================
+  */
+
+  if (
+    !title ||
+    !channel ||
+    !thumbnail ||
+    !duration
+  ) {
+    const scripts =
+      html.match(
+        /<script[^>]*>([\s\S]*?)<\/script>/gi
+      ) || [];
+
+    logStep(
+      "🎵 Số script tìm thấy:",
+      scripts.length
+    );
+
+    for (const script of scripts) {
+      if (script.length < 100) {
         continue;
       }
 
-      if (result.some(
-        (item) => item.height === height
-      )) {
+      const text = script
+        .replace(/<script[^>]*>/i, "")
+        .replace(/<\/script>$/i, "")
+        .trim();
+
+      if (
+        !/video|aweme|author|cover|desc|duration/i.test(
+          text
+        )
+      ) {
         continue;
       }
 
-      result.push({
-        id: `mp4-${height}`,
-        type: "video",
-        ext: "mp4",
-        label: `MP4 ${height}p`,
-        quality: `${height}p`,
-        width: Number(format.width || 0),
-        height,
-        filesize:
-          format.filesize ||
-          format.filesize_approx ||
-          null,
-        filesizeText:
-          format.filesize ||
-          format.filesize_approx
-            ? formatBytes(
-                format.filesize ||
-                format.filesize_approx
-              )
-            : "",
-        url: format.url
-      });
+      if (!title) {
+        const match = text.match(
+          /"(?:desc|title|description|headline)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        );
 
-      if (result.length >= 6) {
+        if (match) {
+          title =
+            decodeJsonString(match[1]);
+        }
+      }
+
+      if (!channel) {
+        const match = text.match(
+          /"(?:nickname|author_name|authorName|username|unique_id|uniqueId)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        );
+
+        if (match) {
+          channel =
+            decodeJsonString(match[1]);
+        }
+      }
+
+      if (!thumbnail) {
+        const match = text.match(
+          /"(?:origin_cover|originCover|dynamic_cover|dynamicCover|cover|cover_url|coverUrl)"\s*:\s*(?:"([^"]+)"|\{[\s\S]{0,1000}?"url"\s*:\s*"([^"]+)")/i
+        );
+
+        if (match) {
+          thumbnail =
+            decodeJsonString(
+              match[1] ||
+              match[2] ||
+              ""
+            );
+        }
+      }
+
+      if (!duration) {
+        const match = text.match(
+          /"(?:duration|duration_ms|durationMs)"\s*:\s*(\d+(?:\.\d+)?)/i
+        );
+
+        if (match) {
+          duration =
+            normalizeDuration(match[1]);
+        }
+      }
+
+      if (
+        title &&
+        channel &&
+        thumbnail &&
+        duration
+      ) {
         break;
       }
     }
   }
 
-  return result;
-}
-
-/*
-========================================
-AUDIO FORMATS
-========================================
-*/
-
-function buildAudioFormats(info) {
-  const formats = Array.isArray(info.formats)
-    ? info.formats
-    : [];
-
-  const audio = formats
-    .filter((format) => {
-      return (
-        format.acodec &&
-        format.acodec !== "none" &&
-        format.vcodec === "none" &&
-        format.url
-      );
-    })
-    .sort((a, b) => {
-      return (
-        Number(b.abr || 0) -
-        Number(a.abr || 0)
-      );
-    });
-
-  if (audio.length === 0) {
-    return [];
-  }
-
-  const best =
-    audio[0];
-
   /*
-  ========================================
-  LƯU Ý:
-  ========================================
-
-  URL này là audio stream gốc.
-  Có thể là m4a/webm chứ chưa chắc là MP3.
-
-  Chúng ta sẽ làm bước chuyển MP3
-  bằng FFmpeg ở bước kế tiếp.
+  ==================================
+  META FALLBACK
+  ==================================
   */
 
-  return [
-    {
-      id: "audio-best",
-      type: "audio",
-      ext: best.ext || "m4a",
-      label: "Audio",
-      quality:
-        best.abr
-          ? `${Math.round(best.abr)} kbps`
-          : "Best",
-      bitrate:
-        best.abr || null,
-      filesize:
-        best.filesize ||
-        best.filesize_approx ||
-        null,
-      filesizeText:
-        best.filesize ||
-        best.filesize_approx
-          ? formatBytes(
-              best.filesize ||
-              best.filesize_approx
-            )
-          : "",
-      url: best.url
-    }
-  ];
-}
+  title =
+    title ||
+    getMeta(html, "og:title") ||
+    getMeta(html, "twitter:title");
 
-/*
-========================================
-LẤY THÔNG TIN BẰNG YT-DLP
-========================================
-*/
+  thumbnail =
+    thumbnail ||
+    getMeta(html, "og:image") ||
+    getMeta(html, "twitter:image");
 
-async function getVideoInfo(url) {
-  logStep(
-    "🔎 Đang phân tích bằng yt-dlp:",
-    url
-  );
+  description =
+    description ||
+    getMeta(html, "og:description");
 
-  const result = await youtubedl(
-    url,
-    {
-      dumpSingleJson: true,
-      noWarnings: true,
-      noCallHome: true,
-      noCheckCertificates: true,
-      preferFreeFormats: true,
-      skipDownload: true,
-      noPlaylist: true
-    },
-    {
-      timeout: 120000
-    }
-  );
-
-  return result;
-}
-
-/*
-========================================
-FORMAT KẾT QUẢ
-========================================
-*/
-
-function buildResponse(info, originalUrl) {
-  const platform =
-    detectPlatform(originalUrl);
-
-  const title =
-    info.title ||
-    "Không có tiêu đề";
-
-  const channel =
-    info.channel ||
-    info.uploader ||
-    info.creator ||
-    "Không có thông tin";
-
-  const thumbnail =
-    info.thumbnail ||
-    null;
-
-  const duration =
-    normalizeDuration(
-      info.duration
-    );
-
-  const videoFormats =
-    buildVideoFormats(info);
-
-  const audioFormats =
-    buildAudioFormats(info);
+  channel =
+    channel ||
+    getMeta(html, "author");
 
   return {
-    success: true,
-
-    platform,
-
-    url:
-      info.webpage_url ||
-      originalUrl,
-
-    video: {
-      id:
-        info.id ||
-        null,
-
-      title,
-
-      channel,
-
-      author:
-        info.uploader ||
-        info.creator ||
-        channel,
-
-      thumbnail,
-
-      description:
-        info.description ||
-        "",
-
-      duration
-    },
-
-    formats: [
-      ...videoFormats,
-      ...audioFormats
-    ],
-
-    formatCount:
-      videoFormats.length +
-      audioFormats.length,
-
-    message:
-      "Đã phân tích video."
+    title: title || "",
+    channel: channel || "",
+    thumbnail: thumbnail || "",
+    description: description || "",
+    duration: duration || null
   };
 }
 
+async function getDouyinMetadata(url) {
+  try {
+    logStep(
+      "🎵 Đang lấy Douyin metadata:",
+      url
+    );
+
+    const {
+      response,
+      html
+    } = await fetchPage(url);
+
+    if (!response.ok) {
+      logStep(
+        "❌ Douyin HTTP lỗi:",
+        response.status
+      );
+
+      return null;
+    }
+
+    const videoId =
+      getDouyinVideoId(url);
+
+    if (videoId) {
+      logStep(
+        "🎵 Douyin Video ID:",
+        videoId
+      );
+    }
+
+    const metadata =
+      parseDouyinEmbeddedData(html);
+
+    logStep(
+      "🎵 Douyin metadata cuối:",
+      JSON.stringify(metadata)
+    );
+
+    return metadata;
+  } catch (error) {
+    console.error(
+      "❌ Douyin metadata error:",
+      error.message
+    );
+
+    return null;
+  }
+}
+
 /*
-========================================
+====================================
+FACEBOOK
+====================================
+*/
+
+function isFacebookUrl(url) {
+  try {
+    const host = new URL(url)
+      .hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+
+    return (
+      host === "facebook.com" ||
+      host === "fb.watch" ||
+      host.endsWith(".facebook.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function getFacebookMetadata(url) {
+  try {
+    logStep(
+      "📘 Đang lấy Facebook metadata:",
+      url
+    );
+
+    const {
+      response,
+      html
+    } = await fetchPage(url);
+
+    logStep(
+      "📘 Facebook HTTP:",
+      response.status
+    );
+
+    let title =
+      getMeta(html, "og:title");
+
+    let description =
+      getMeta(html, "og:description");
+
+    let thumbnail =
+      getMeta(html, "og:image") ||
+      getMeta(html, "twitter:image");
+
+    const jsonLdMatches =
+      html.match(
+        /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+      ) || [];
+
+    for (const script of jsonLdMatches) {
+      const jsonText = script
+        .replace(/<script[^>]*>/i, "")
+        .replace(/<\/script>$/i, "")
+        .trim();
+
+      const data =
+        safeJsonParse(jsonText);
+
+      if (!data) {
+        continue;
+      }
+
+      title =
+        title ||
+        findValueDeep(data, [
+          "headline",
+          "name",
+          "description"
+        ]);
+
+      description =
+        description ||
+        findValueDeep(data, [
+          "description"
+        ]);
+
+      thumbnail =
+        thumbnail ||
+        findImageDeep(data);
+    }
+
+    if (
+      !title ||
+      !thumbnail
+    ) {
+      const titleMatch =
+        html.match(
+          /"(?:og:title|title|name)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        );
+
+      if (
+        !title &&
+        titleMatch
+      ) {
+        title =
+          decodeJsonString(
+            titleMatch[1]
+          );
+      }
+
+      const imageMatch =
+        html.match(
+          /"(?:og:image|image|thumbnail)"\s*:\s*"((?:\\.|[^"\\])*)"/i
+        );
+
+      if (
+        !thumbnail &&
+        imageMatch
+      ) {
+        thumbnail =
+          decodeJsonString(
+            imageMatch[1]
+          );
+      }
+    }
+
+    logStep(
+      "📘 Facebook metadata:",
+      JSON.stringify({
+        httpStatus: response.status,
+        title,
+        thumbnail,
+        description
+      })
+    );
+
+    if (
+      !title &&
+      !thumbnail &&
+      !description
+    ) {
+      return null;
+    }
+
+    return {
+      title: title || "",
+      channel: "",
+      thumbnail: thumbnail || "",
+      description: description || "",
+      duration: null
+    };
+  } catch (error) {
+    console.error(
+      "❌ Facebook metadata error:",
+      error.message
+    );
+
+    return null;
+  }
+}
+
+/*
+====================================
 API ANALYZE
-========================================
+====================================
 */
 
 app.post(
@@ -570,302 +1811,441 @@ app.post(
       "📥 NHẬN REQUEST /api/analyze"
     );
 
-    const originalUrl =
-      req.body?.url;
-
     console.log(
       "URL:",
-      originalUrl
+      req.body?.url
     );
 
     console.log(
       "========================================"
     );
 
-    if (!originalUrl) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Thiếu URL."
-      });
-    }
-
-    const url =
-      String(originalUrl).trim();
-
-    if (!isValidHttpUrl(url)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "URL không hợp lệ."
-      });
-    }
-
-    try {
-      const info =
-        await getVideoInfo(url);
-
-      if (!info) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Không lấy được thông tin video."
-        });
-      }
-
-      const result =
-        buildResponse(
-          info,
-          url
-        );
-
-      logStep(
-        "✅ Phân tích thành công:",
-        JSON.stringify({
-          platform:
-            result.platform,
-
-          title:
-            result.video.title,
-
-          duration:
-            result.video.duration,
-
-          formats:
-            result.formats.length
-        })
-      );
-
-      return res.json(result);
-
-    } catch (error) {
-      console.error(
-        "❌ yt-dlp ERROR:",
-        error
-      );
-
-      let message =
-        "Không thể phân tích video.";
-
-      const errorText =
-        String(
-          error?.stderr ||
-          error?.message ||
-          ""
-        );
-
-      if (
-        /unsupported|not supported/i.test(
-          errorText
-        )
-      ) {
-        message =
-          "Nền tảng hoặc liên kết này chưa được hỗ trợ.";
-      }
-
-      if (
-        /private|login|sign in/i.test(
-          errorText
-        )
-      ) {
-        message =
-          "Video riêng tư hoặc yêu cầu đăng nhập.";
-      }
-
-      if (
-        /not found|unavailable/i.test(
-          errorText
-        )
-      ) {
-        message =
-          "Không tìm thấy video hoặc video không còn khả dụng.";
-      }
-
-      return res.status(500).json({
-        success: false,
-        message,
-        error:
-          process.env.NODE_ENV === "production"
-            ? undefined
-            : errorText
-      });
-    }
-  }
-);
-
-/*
-========================================
-API LẤY FORMAT
-========================================
-*/
-
-app.post(
-  "/api/formats",
-  async (req, res) => {
     const originalUrl =
       req.body?.url;
 
     if (!originalUrl) {
       return res.status(400).json({
         success: false,
-        message:
-          "Thiếu URL."
+        message: "Thiếu URL."
       });
     }
 
     const url =
       String(originalUrl).trim();
 
-    if (!isValidHttpUrl(url)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "URL không hợp lệ."
-      });
+    /*
+    ====================================
+    YOUTUBE
+    ====================================
+    */
+
+    const youtubeVideoId =
+      getYouTubeVideoId(url);
+
+    if (youtubeVideoId) {
+      logStep(
+        "▶️ Nhận diện YouTube:",
+        youtubeVideoId
+      );
+
+      if (!YOUTUBE_API_KEY) {
+        return res.status(500).json({
+          success: false,
+          message:
+            "Backend chưa có YOUTUBE_API_KEY."
+        });
+      }
+
+      try {
+        const apiUrl =
+          "https://www.googleapis.com/youtube/v3/videos" +
+          "?part=snippet,contentDetails" +
+          "&id=" +
+          encodeURIComponent(
+            youtubeVideoId
+          ) +
+          "&key=" +
+          encodeURIComponent(
+            YOUTUBE_API_KEY
+          );
+
+        const response =
+          await fetch(apiUrl);
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          console.error(
+            "YouTube API error:",
+            data
+          );
+
+          return res.status(502).json({
+            success: false,
+            message:
+              "YouTube API trả về lỗi.",
+            error:
+              data.error?.message ||
+              "Unknown YouTube API error"
+          });
+        }
+
+        if (
+          !data.items ||
+          data.items.length === 0
+        ) {
+          return res.status(404).json({
+            success: false,
+            message:
+              "Không tìm thấy video YouTube."
+          });
+        }
+
+        const video =
+          data.items[0];
+
+        const snippet =
+          video.snippet || {};
+
+        const contentDetails =
+          video.contentDetails || {};
+
+        const thumbnails =
+          snippet.thumbnails || {};
+
+        const thumbnail =
+          thumbnails.maxres?.url ||
+          thumbnails.high?.url ||
+          thumbnails.medium?.url ||
+          thumbnails.default?.url ||
+          null;
+
+        logStep(
+          "✅ YouTube metadata OK"
+        );
+
+        return res.json({
+          success: true,
+
+          platform: "YouTube",
+
+          url,
+
+          video: {
+            id: youtubeVideoId,
+
+            title:
+              snippet.title ||
+              "Không có tiêu đề",
+
+            description:
+              snippet.description ||
+              "",
+
+            channel:
+              snippet.channelTitle ||
+              "Không có thông tin",
+
+            publishedAt:
+              snippet.publishedAt ||
+              null,
+
+            duration:
+              contentDetails.duration ||
+              null,
+
+            thumbnail
+          }
+        });
+      } catch (error) {
+        console.error(
+          "❌ YouTube error:",
+          error
+        );
+
+        return res.status(500).json({
+          success: false,
+          message:
+            "Lỗi khi kết nối YouTube API.",
+          error: error.message
+        });
+      }
     }
 
-    try {
-      const info =
-        await getVideoInfo(url);
+    /*
+    ====================================
+    TIKTOK SHORT
+    ====================================
+    */
 
-      const result =
-        buildResponse(
-          info,
-          url
+    if (isTikTokShortUrl(url)) {
+      logStep(
+        "🎵 Nhận diện TikTok short URL"
+      );
+
+      const resolvedUrl =
+        await resolveTikTokUrl(url);
+
+      if (!resolvedUrl) {
+        return res.json({
+          success: true,
+          platform: "TikTok",
+          url,
+          video: null,
+          message:
+            "Không xác định được URL TikTok đích."
+        });
+      }
+
+      const metadata =
+        await getTikTokMetadata(
+          resolvedUrl
         );
 
       return res.json({
         success: true,
-        platform:
-          result.platform,
-        url:
-          result.url,
-        formats:
-          result.formats
+
+        platform: "TikTok",
+
+        url: resolvedUrl,
+
+        video: metadata
+          ? {
+              title:
+                metadata.title ||
+                "Không có tiêu đề",
+
+              channel:
+                metadata.channel ||
+                "Không có thông tin",
+
+              thumbnail:
+                metadata.thumbnail ||
+                null,
+
+              duration:
+                metadata.duration ||
+                null
+            }
+          : null,
+
+        message: metadata
+          ? "Đã lấy thông tin TikTok."
+          : "Đã xác định URL TikTok đích."
       });
-
-    } catch (error) {
-      console.error(
-        "❌ formats ERROR:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Không lấy được danh sách định dạng.",
-        error:
-          process.env.NODE_ENV === "production"
-            ? undefined
-            : error.message
-      });
-    }
-  }
-);
-
-/*
-========================================
-API REDIRECT DOWNLOAD
-========================================
-
-Cho phép frontend yêu cầu một format
-đã lấy từ chính backend.
-
-Không nhận URL tùy ý từ frontend
-để tránh biến endpoint thành
-proxy mở.
-========================================
-*/
-
-app.get(
-  "/api/download",
-  async (req, res) => {
-    const url =
-      String(
-        req.query?.url || ""
-      ).trim();
-
-    const filename =
-      String(
-        req.query?.filename ||
-        "video"
-      )
-      .replace(
-        /[^a-zA-Z0-9._-]/g,
-        "_"
-      );
-
-    if (!url) {
-      return res.status(400).send(
-        "Thiếu URL tải xuống."
-      );
     }
 
-    if (!isValidHttpUrl(url)) {
-      return res.status(400).send(
-        "URL không hợp lệ."
-      );
-    }
+    /*
+    ====================================
+    TIKTOK FULL
+    ====================================
+    */
 
-    try {
+    if (isTikTokUrl(url)) {
       logStep(
-        "⬇️ Redirect download:",
-        url
+        "🎵 Nhận diện TikTok"
       );
 
-      /*
-      Redirect tới stream URL.
-      */
+      const metadata =
+        await getTikTokMetadata(url);
 
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`
-      );
+      return res.json({
+        success: true,
 
-      return res.redirect(url);
+        platform: "TikTok",
 
-    } catch (error) {
-      console.error(
-        "❌ Download ERROR:",
-        error
-      );
+        url,
 
-      return res.status(500).send(
-        "Không thể tải video."
-      );
+        video: metadata
+          ? {
+              title:
+                metadata.title ||
+                "Không có tiêu đề",
+
+              channel:
+                metadata.channel ||
+                "Không có thông tin",
+
+              thumbnail:
+                metadata.thumbnail ||
+                null,
+
+              duration:
+                metadata.duration ||
+                null
+            }
+          : null,
+
+        message: metadata
+          ? "Đã lấy thông tin TikTok."
+          : "Đã nhận diện liên kết TikTok."
+      });
     }
-  }
-);
 
-/*
-========================================
-ERROR HANDLER
-========================================
-*/
+    /*
+    ====================================
+    DOUYIN
+    ====================================
+    */
 
-app.use(
-  (error, req, res, next) => {
-    console.error(
-      "❌ SERVER ERROR:",
-      error
+    if (
+      isDouyinShortUrl(url) ||
+      isDouyinUrl(url)
+    ) {
+      logStep(
+        "🎵 Nhận diện Douyin"
+      );
+
+      const resolvedUrl =
+        await resolveDouyinUrl(url);
+
+      logStep(
+        "🎵 Douyin URL cuối:",
+        resolvedUrl
+      );
+
+      const metadata =
+        await getDouyinMetadata(
+          resolvedUrl
+        );
+
+      return res.json({
+        success: true,
+
+        platform: "Douyin",
+
+        url: resolvedUrl,
+
+        video: metadata
+          ? {
+              title:
+                metadata.title ||
+                "Không có tiêu đề",
+
+              channel:
+                metadata.channel ||
+                "Không có thông tin",
+
+              thumbnail:
+                metadata.thumbnail ||
+                null,
+
+              description:
+                metadata.description ||
+                "",
+
+              duration:
+                metadata.duration ||
+                null
+            }
+          : null,
+
+        message: metadata
+          ? "Đã lấy thông tin Douyin."
+          : "Đã nhận diện liên kết Douyin."
+      });
+    }
+
+    /*
+    ====================================
+    FACEBOOK
+    ====================================
+    */
+
+    if (isFacebookUrl(url)) {
+      logStep(
+        "📘 Nhận diện Facebook"
+      );
+
+      const metadata =
+        await getFacebookMetadata(url);
+
+      return res.json({
+        success: true,
+
+        platform: "Facebook",
+
+        url,
+
+        video: metadata
+          ? {
+              title:
+                metadata.title ||
+                "Không có tiêu đề",
+
+              channel:
+                metadata.channel ||
+                "Không có thông tin",
+
+              thumbnail:
+                metadata.thumbnail ||
+                null,
+
+              description:
+                metadata.description ||
+                "",
+
+              duration:
+                metadata.duration ||
+                null
+            }
+          : null,
+
+        message: metadata
+          ? "Đã lấy thông tin Facebook."
+          : "Facebook không trả metadata công khai cho liên kết này."
+      });
+    }
+
+    /*
+    ====================================
+    KHÔNG HỖ TRỢ
+    ====================================
+    */
+
+    logStep(
+      "❓ Liên kết chưa được hỗ trợ:",
+      url
     );
 
-    if (res.headersSent) {
-      return next(error);
-    }
-
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
       message:
-        "Lỗi máy chủ."
+        "Liên kết này chưa được hỗ trợ."
     });
   }
 );
 
 /*
-========================================
-START
-========================================
+====================================
+ERROR HANDLER
+====================================
+*/
+
+app.use((error, req, res, next) => {
+  console.error(
+    "❌ SERVER ERROR:",
+    error
+  );
+
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  return res.status(500).json({
+    success: false,
+    message:
+      "Lỗi máy chủ.",
+    error:
+      error.message
+  });
+});
+
+/*
+====================================
+START SERVER
+====================================
 */
 
 app.listen(
@@ -878,10 +2258,6 @@ app.listen(
 
     console.log(
       `🚀 My Video Tool backend đang chạy tại port ${PORT}`
-    );
-
-    console.log(
-      "📦 yt-dlp downloader: READY"
     );
 
     console.log(
